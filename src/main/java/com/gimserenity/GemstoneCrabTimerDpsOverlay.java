@@ -1,4 +1,4 @@
-package com.example;
+package com.gimserenity;
 
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;

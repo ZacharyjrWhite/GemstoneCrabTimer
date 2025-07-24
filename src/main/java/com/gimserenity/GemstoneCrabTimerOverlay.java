@@ -1,4 +1,4 @@
-package com.example;
+package com.gimserenity;
 
 
 import net.runelite.api.GameObject;

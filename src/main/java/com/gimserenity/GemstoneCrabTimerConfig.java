@@ -1,4 +1,4 @@
-package com.example;
+package com.gimserenity;
 
 import java.awt.Color;
 import net.runelite.client.config.Config;
