@@ -1,19 +1,65 @@
 package com.example;
 
+import java.awt.Color;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.Range;
 
-@ConfigGroup("example")
-public interface ExampleConfig extends Config
+@ConfigGroup("gemstonecrab")
+public interface GemstoneCrabTimerConfig extends Config
 {
 	@ConfigItem(
-		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
+		keyName = "enableNotifications",
+		name = "Enable Notifications",
+		description = "Enable desktop notifications when Gemstone Crab reaches HP threshold"
 	)
-	default String greeting()
+	default boolean enableNotifications()
 	{
-		return "Hello";
+		return true;
+	}
+	
+	@Range(
+		min = 1,
+		max = 99
+	)
+	@ConfigItem(
+		keyName = "hpThreshold",
+		name = "HP Threshold %",
+		description = "Send notification when Gemstone Crab HP reaches this percentage"
+	)
+	default int hpThreshold()
+	{
+		return 2;
+	}
+	
+	@ConfigItem(
+		keyName = "notificationMessage",
+		name = "Notification Message",
+		description = "Message to show in the notification"
+	)
+	default String notificationMessage()
+	{
+		return "Gemstone Crab HP threshold reached!";
+	}
+	
+	@ConfigItem(
+		keyName = "highlightTunnel",
+		name = "Highlight Tunnel",
+		description = "Highlight the nearest tunnel after boss death"
+	)
+	default boolean highlightTunnel()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "tunnelHighlightColor",
+		name = "Tunnel Highlight Color",
+		description = "Color to highlight the tunnel with"
+	)
+	default Color tunnelHighlightColor()
+	{
+		return Color.GREEN;
 	}
 }

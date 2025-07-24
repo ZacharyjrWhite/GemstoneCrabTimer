@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "java",
+            "name": "Run OptimalNode Plugin",
+            "request": "launch",
+            "mainClass": "com.example.ExamplePluginTest",
+            "projectName": "GemstoneCrabTimer",
+            "vmArgs": "-ea",
+            "args": "--developer-mode --debug"
+        }
+    ]
+}
