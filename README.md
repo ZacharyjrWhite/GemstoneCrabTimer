@@ -8,6 +8,8 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 - Tracks the Gemstone Crab boss HP bar
 - Sends desktop notifications when HP reaches a user-defined threshold (default 2%)
 - Helps with AFK training by alerting you when to tab back in
+  
+<img width="456" height="141" alt="image" src="https://github.com/user-attachments/assets/643c11c6-a8c2-4f6e-8ecc-f76d18dde7b3" />
 
 ### Tunnel Highlighting
 - Automatically highlights the tunnel after the boss dies
@@ -20,6 +22,9 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 - Uses XP drops to accurately track damage in all combat styles
 - Supports all combat types: Melee (Attack, Strength, Defence), Ranged, and Magic
 - Can be toggled on/off in the configuration
+
+<img width="166" height="92" alt="image" src="https://github.com/user-attachments/assets/c0a9fbe9-fd2d-45d4-99a5-b97ac12e0f44" />
+
 
 ## Configuration Options
 
