@@ -30,7 +30,7 @@ import java.util.Map;
 @Slf4j
 @PluginDescriptor(
 	name = "Gemstone Crab Timer",
-	description = "Tracks Gemstone Crab boss HP and sends notifications at threshold",
+	description = "Tracks Gemstone Crab boss HP and sends notifications at threshold for a better afk experience.",
 	tags = {"boss", "hp", "notification", "gemstone", "crab"}
 )
 public class GemstoneCrabTimerPlugin extends Plugin
@@ -151,9 +151,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		return fightInProgress;
 	}
 	
-	/**
-	 * Reset all DPS tracking variables
-	 */
+	//Reset all DPS tracking variables
 	private void resetDpsTracking()
 	{
 		totalDamage = 0;
@@ -325,9 +323,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			return;
 		}
 		
-		// We're no longer tracking damage via HP percentage
-		// Damage is now tracked via HitsplatApplied event
-		
 		// Check if HP is at or below the threshold
 		if (hpPercent <= config.hpThreshold() && !notificationSent)
 		{
@@ -370,9 +365,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		}
 	}
 	
-	/**
-	 * Find the nearest tunnel to the player
-	 */
+
+	// Find the nearest tunnel to the player
 	private void findNearestTunnel()
 	{
 		if (client.getLocalPlayer() == null || tunnels.isEmpty())
