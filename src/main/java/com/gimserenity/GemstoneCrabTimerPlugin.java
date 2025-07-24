@@ -3,20 +3,19 @@ package com.gimserenity;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.NPC;
+import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
-import net.runelite.api.Hitsplat;
+import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
@@ -80,6 +79,15 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private long fightDuration = 0;
 	private double currentDps = 0;
 	private boolean fightInProgress = false;
+	
+	// XP tracking for DPS calculation
+	private int lastAttackXp = 0;
+	private int lastStrengthXp = 0;
+	private int lastDefenceXp = 0;
+	private int lastRangedXp = 0;
+	private int lastMagicXp = 0;
+	private long lastXpGainTime = 0;
+	private static final long XP_GAIN_TIMEOUT = 1000; // 1 second timeout for XP gains
 
 	// Overlay for highlighting tunnels
 	@Inject
@@ -159,43 +167,136 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		fightDuration = 0;
 		currentDps = 0;
 		fightInProgress = false;
+		
+		// Initialize XP tracking with current XP values
+		if (client != null)
+		{
+			lastAttackXp = client.getSkillExperience(Skill.ATTACK);
+			lastStrengthXp = client.getSkillExperience(Skill.STRENGTH);
+			lastDefenceXp = client.getSkillExperience(Skill.DEFENCE);
+			lastRangedXp = client.getSkillExperience(Skill.RANGED);
+			lastMagicXp = client.getSkillExperience(Skill.MAGIC);
+		}
+		else
+		{
+			// Fallback if client is not available
+			lastAttackXp = 0;
+			lastStrengthXp = 0;
+			lastDefenceXp = 0;
+			lastRangedXp = 0;
+			lastMagicXp = 0;
+		}
+		lastXpGainTime = 0;
 	}
 	
+
+	
 	@Subscribe
-	public void onHitsplatApplied(HitsplatApplied event)
+	public void onStatChanged(StatChanged statChanged)
 	{
-		Actor target = event.getActor();
-		
-		// Check if the target is the Gemstone Crab boss
-		if (target instanceof NPC && ((NPC) target).getId() == GEMSTONE_CRAB_ID)
+		// Only process if boss is present and we're near it
+		if (!bossPresent)
 		{
-			Hitsplat hitsplat = event.getHitsplat();
+			return;
+		}
+		
+		// Get the skill that changed
+		Skill skill = statChanged.getSkill();
+		int xp = statChanged.getXp();
+		int estimatedDamage = 0;
+		boolean isRelevantXp = false;
+		
+		// Check if it's a combat skill and calculate estimated damage
+		switch (skill)
+		{
+			case ATTACK:
+				if (xp > lastAttackXp)
+				{
+					estimatedDamage = estimateDamageFromXp(xp - lastAttackXp);
+					lastAttackXp = xp;
+					isRelevantXp = true;
+				}
+				break;
+			case STRENGTH:
+				if (xp > lastStrengthXp)
+				{
+					estimatedDamage = estimateDamageFromXp(xp - lastStrengthXp);
+					lastStrengthXp = xp;
+					isRelevantXp = true;
+				}
+				break;
+			case DEFENCE:
+				if (xp > lastDefenceXp)
+				{
+					estimatedDamage = estimateDamageFromXp(xp - lastDefenceXp);
+					lastDefenceXp = xp;
+					isRelevantXp = true;
+				}
+				break;
+			case RANGED:
+				if (xp > lastRangedXp)
+				{
+					estimatedDamage = estimateDamageFromXp(xp - lastRangedXp);
+					lastRangedXp = xp;
+					isRelevantXp = true;
+				}
+				break;
+			case MAGIC:
+				if (xp > lastMagicXp)
+				{
+					estimatedDamage = estimateDamageFromXp(xp - lastMagicXp);
+					lastMagicXp = xp;
+					isRelevantXp = true;
+				}
+				break;
+			default:
+				break;
+		}
+		
+		// If we got relevant XP and it's been more than the timeout since last XP gain
+		if (isRelevantXp && estimatedDamage > 0)
+		{
+			long currentTime = System.currentTimeMillis();
 			
-			// Only count damage from the player's hits
-			if (hitsplat.isMine())
+			// Only process if it's been more than the timeout since last XP gain
+			// This helps prevent double-counting damage that was already tracked via hitsplats
+			if (currentTime - lastXpGainTime > XP_GAIN_TIMEOUT)
 			{
-				// Add the damage to our total
-				int damage = hitsplat.getAmount();
-				totalDamage += damage;
-				
 				// If we're not tracking a fight yet, start now
 				if (!fightInProgress)
 				{
 					fightInProgress = true;
-					fightStartTime = System.currentTimeMillis();
+					fightStartTime = currentTime;
 				}
 				
+				// Add the estimated damage to our total
+				totalDamage += estimatedDamage;
+				
 				// Update current DPS
-				long currentDuration = System.currentTimeMillis() - fightStartTime;
+				long currentDuration = currentTime - fightStartTime;
 				if (currentDuration > 0)
 				{
 					currentDps = (double) totalDamage / (currentDuration / 1000.0);
 				}
 				
-				log.debug("Hit on Gemstone Crab: {}. Total damage: {}, DPS: {}", 
-					damage, totalDamage, currentDps);
+				log.debug("XP-based damage on Gemstone Crab: {}. Total damage: {}, DPS: {}", 
+					estimatedDamage, totalDamage, currentDps);
 			}
+			
+			// Update last XP gain time
+			lastXpGainTime = currentTime;
 		}
+	}
+	
+	/**
+	 * Estimate damage based on XP gained
+	 * For Gemstone Crabs, XP is about 3.5x the damage dealt (87.5% of normal)
+	 * according to the OSRS Wiki
+	 */
+	private int estimateDamageFromXp(int xpGained)
+	{
+		// XP is roughly 3.5x the damage dealt for Gemstone Crabs
+		return Math.max(1, Math.round(xpGained / 3.5f));
 	}
 	
 	@Subscribe

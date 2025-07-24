@@ -6,7 +6,7 @@
             "type": "java",
             "name": "Run OptimalNode Plugin",
             "request": "launch",
-            "mainClass": "com.example.ExamplePluginTest",
+            "mainClass": "com.gimserenity.GemstoneCrabPluginTest",
             "projectName": "GemstoneCrabTimer",
             "vmArgs": "-ea",
             "args": "--developer-mode --debug"
