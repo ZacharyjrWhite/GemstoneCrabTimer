@@ -62,4 +62,14 @@ public interface GemstoneCrabTimerConfig extends Config
 	{
 		return Color.GREEN;
 	}
+	
+	@ConfigItem(
+		keyName = "showDpsTracker",
+		name = "Show DPS Tracker",
+		description = "Display damage and DPS information during boss fights"
+	)
+	default boolean showDpsTracker()
+	{
+		return true;
+	}
 }

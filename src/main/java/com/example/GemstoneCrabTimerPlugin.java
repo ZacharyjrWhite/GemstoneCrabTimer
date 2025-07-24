@@ -3,6 +3,7 @@ package com.example;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
@@ -12,8 +13,10 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
+import net.runelite.api.Hitsplat;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
@@ -70,10 +73,20 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	// Track all tunnels in the scene
 	private final Map<WorldPoint, GameObject> tunnels = new HashMap<>();
+	
+	// DPS tracking variables
+	private int totalDamage = 0;
+	private long fightStartTime = 0;
+	private long fightDuration = 0;
+	private double currentDps = 0;
+	private boolean fightInProgress = false;
 
 	// Overlay for highlighting tunnels
 	@Inject
 	private GemstoneCrabTimerOverlay overlay;
+	
+	@Inject
+	private GemstoneCrabTimerDpsOverlay dpsOverlay;
 	
 	@Override
 	protected void startUp() throws Exception
@@ -83,7 +96,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		shouldHighlightTunnel = false;
 		nearestTunnel = null;
 		tunnels.clear();
+		resetDpsTracking();
 		overlayManager.add(overlay);
+		overlayManager.add(dpsOverlay);
 	}
 
 	@Override
@@ -95,7 +110,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		shouldHighlightTunnel = false;
 		nearestTunnel = null;
 		tunnels.clear();
+		resetDpsTracking();
 		overlayManager.remove(overlay);
+		overlayManager.remove(dpsOverlay);
 	}
 	
 	// Getter methods for the overlay
@@ -109,6 +126,80 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		return shouldHighlightTunnel;
 	}
 	
+	// DPS tracking getter methods
+	public int getTotalDamage()
+	{
+		return totalDamage;
+	}
+	
+	public double getCurrentDps()
+	{
+		return currentDps;
+	}
+	
+	public long getFightDuration()
+	{
+		if (fightInProgress)
+		{
+			return (System.currentTimeMillis() - fightStartTime);
+		}
+		return fightDuration;
+	}
+	
+	public boolean isFightInProgress()
+	{
+		return fightInProgress;
+	}
+	
+	/**
+	 * Reset all DPS tracking variables
+	 */
+	private void resetDpsTracking()
+	{
+		totalDamage = 0;
+		fightStartTime = 0;
+		fightDuration = 0;
+		currentDps = 0;
+		fightInProgress = false;
+	}
+	
+	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied event)
+	{
+		Actor target = event.getActor();
+		
+		// Check if the target is the Gemstone Crab boss
+		if (target instanceof NPC && ((NPC) target).getId() == GEMSTONE_CRAB_ID)
+		{
+			Hitsplat hitsplat = event.getHitsplat();
+			
+			// Only count damage from the player's hits
+			if (hitsplat.isMine())
+			{
+				// Add the damage to our total
+				int damage = hitsplat.getAmount();
+				totalDamage += damage;
+				
+				// If we're not tracking a fight yet, start now
+				if (!fightInProgress)
+				{
+					fightInProgress = true;
+					fightStartTime = System.currentTimeMillis();
+				}
+				
+				// Update current DPS
+				long currentDuration = System.currentTimeMillis() - fightStartTime;
+				if (currentDuration > 0)
+				{
+					currentDps = (double) totalDamage / (currentDuration / 1000.0);
+				}
+				
+				log.debug("Hit on Gemstone Crab: {}. Total damage: {}, DPS: {}", 
+					damage, totalDamage, currentDps);
+			}
+		}
+	}
+	
 	@Subscribe
 	public void onNpcSpawned(NpcSpawned npcSpawned)
 	{
@@ -119,6 +210,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss spawned");
 			bossPresent = true;
 			notificationSent = false;
+			
+			// Start a new DPS tracking session
+			resetDpsTracking();
+			fightInProgress = true;
+			fightStartTime = System.currentTimeMillis();
 		}
 	}
 	
@@ -132,6 +228,21 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss despawned");
 			bossPresent = false;
 			notificationSent = false;
+			
+			// Finalize DPS tracking
+			if (fightInProgress)
+			{
+				fightDuration = System.currentTimeMillis() - fightStartTime;
+				fightInProgress = false;
+				
+				// Calculate final DPS
+				if (fightDuration > 0)
+				{
+					currentDps = (double) totalDamage / (fightDuration / 1000.0);
+				}
+				log.debug("Fight ended. Total damage: {}, Duration: {}s, DPS: {}", 
+					totalDamage, fightDuration / 1000.0, currentDps);
+			}
 			
 			// When the boss dies, find and highlight the nearest tunnel
 			if (config.highlightTunnel())
@@ -174,6 +285,13 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			shouldHighlightTunnel = false;
 			nearestTunnel = null;
 			tunnels.clear();
+			
+			// Reset DPS tracking when changing areas
+			if (fightInProgress)
+			{
+				log.debug("Area change detected, resetting DPS tracking");
+				resetDpsTracking();
+			}
 		}
 	}
 	
@@ -206,6 +324,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Failed to parse HP percentage from text: {}", text);
 			return;
 		}
+		
+		// We're no longer tracking damage via HP percentage
+		// Damage is now tracked via HitsplatApplied event
 		
 		// Check if HP is at or below the threshold
 		if (hpPercent <= config.hpThreshold() && !notificationSent)
