@@ -323,11 +323,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		}
 	}
 	
-	/**
-	 * Estimate damage based on XP gained
-	 * For Gemstone Crabs, XP is about 3.5x the damage dealt (87.5% of normal)
-	 * according to the OSRS Wiki
-	 */
 	private int estimateDamageFromXp(int xpGained)
 	{
 		// XP is roughly 3.5x the damage dealt for Gemstone Crabs
@@ -438,11 +433,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		{
 			checkBossHpAndNotify();
 		}
-		
-		// We don't reset tunnel highlighting here anymore
-		// Tunnel highlighting is now only reset when:
-		// 1. A new boss spawns (in onNpcSpawned)
-		// 2. Player leaves the area (earlier in this method)
 	}
 
 	@Subscribe
