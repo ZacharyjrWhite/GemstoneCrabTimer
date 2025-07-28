@@ -1,6 +1,6 @@
-# Gemstone Crab Timer
+# Gemstone Crab
 
-A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
+An all-in-one RuneLite plugin for enhancing the Gemstone Crab boss experience.
 
 ## Features
 
@@ -14,11 +14,13 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 ### Tunnel Highlighting
 - Automatically highlights the tunnel after the boss dies
 - Configurable highlight color
+- Optional screen pulse effect when the boss dies to draw attention to the tunnel
 - Resets when the boss respawns or you leave the area
 
-### DPS Tracker
+### Stats Overlay
 - Tracks your damage per second (DPS) against the Gemstone Crab boss
 - Shows total damage dealt, current DPS, XP gained, and fight duration
+- Displays estimated time left in the fight with smooth updates every tick
 - Uses XP drops to accurately track damage in all combat styles
 - Supports all combat types: Melee (Attack, Strength, Defence), Ranged, and Magic
 - Tracks Hitpoints XP separately for display purposes
@@ -32,8 +34,11 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 
 - **HP Threshold**: Set the boss HP percentage at which to receive a notification
 - **Notification Message**: Customize the message displayed in the notification
-- **Show DPS Tracker**: Toggle the DPS tracker overlay on or off
+- **Highlight Tunnel**: Toggle tunnel highlighting on/off
 - **Tunnel Highlight Color**: Choose the color for tunnel highlighting
+- **Pulse Screen**: Toggle the screen pulse effect when the boss dies
+- **Pulse Color**: Choose the color for the screen pulse effect
+- **Show Stats Overlay**: Toggle the stats overlay on/off
 
 ## Installation
 
@@ -41,6 +46,10 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 2. Go to Plugin Hub
 3. Search for "Gemstone Crab Timer"
 4. Click Install
+
+## Authors
+
+GIM Serenity, Pino, AhDoozy
 
 ## Support
 

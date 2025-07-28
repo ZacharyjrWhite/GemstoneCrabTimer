@@ -65,11 +65,31 @@ public interface GemstoneCrabTimerConfig extends Config
 	
 	@ConfigItem(
 		keyName = "showDpsTracker",
-		name = "Show DPS Tracker",
-		description = "Display damage and DPS information during boss fights"
+		name = "Show Stats Overlay",
+		description = "Display damage, DPS, gems collected and other information during boss fights"
 	)
 	default boolean showDpsTracker()
 	{
 		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "pulseScreen",
+		name = "Pulse Screen",
+		description = "Pulse the screen overlay when the tunnel is highlighted"
+	)
+	default boolean pulseScreen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "pulseColor",
+		name = "Pulse Color",
+		description = "Color of the screen pulse"
+	)
+	default Color pulseColor()
+	{
+		return new Color(255, 0, 0, 128); // Semi-transparent red
 	}
 }
