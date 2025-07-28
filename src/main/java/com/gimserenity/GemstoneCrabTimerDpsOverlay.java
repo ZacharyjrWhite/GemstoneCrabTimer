@@ -33,19 +33,22 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
     @Override
     public Dimension render(Graphics2D graphics)
     {
-        // Check if DPS tracker is enabled in config
+        // Don't render if DPS tracking is disabled in config
         if (!config.showDpsTracker())
         {
             return null;
         }
         
-        // Don't show if no fight is in progress and no damage has been done
-        if (!plugin.isFightInProgress() && plugin.getTotalDamage() == 0)
+        // Don't render if player is not in a Gemstone Crab area
+        if (!plugin.isPlayerInGemstoneArea())
         {
             return null;
         }
         
+        // Set up the panel
         panelComponent.getChildren().clear();
+        panelComponent.setBackgroundColor(new Color(18, 18, 18)); // Dark background
+        panelComponent.setPreferredSize(new Dimension(150, 0));
         
         // Add title
         panelComponent.getChildren().add(TitleComponent.builder()
@@ -65,6 +68,12 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             .right(DPS_FORMAT.format(plugin.getCurrentDps()))
             .build());
         
+        // Add XP gained
+        panelComponent.getChildren().add(LineComponent.builder()
+            .left("XP Gained:")
+            .right(String.format("%,d", plugin.getTotalXpGained()))
+            .build());
+
         // Add fight duration
         if (plugin.isFightInProgress() || plugin.getFightDuration() > 0)
         {

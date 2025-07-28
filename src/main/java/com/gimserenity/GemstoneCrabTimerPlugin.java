@@ -86,6 +86,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private int lastDefenceXp = 0;
 	private int lastRangedXp = 0;
 	private int lastMagicXp = 0;
+	private int lastHitpointsXp = 0; // Track Hitpoints XP for display only
+	private int totalXpGained = 0; // Total XP gained during the fight
 	private long lastXpGainTime = 0;
 	private static final long XP_GAIN_TIMEOUT = 1000; // 1 second timeout for XP gains
 
@@ -145,6 +147,15 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		return currentDps;
 	}
 	
+	/**
+	 * Get the total XP gained during the current fight
+	 * @return Total XP gained
+	 */
+	public int getTotalXpGained()
+	{
+		return totalXpGained;
+	}
+	
 	public long getFightDuration()
 	{
 		if (fightInProgress)
@@ -167,6 +178,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		fightDuration = 0;
 		currentDps = 0;
 		fightInProgress = false;
+		totalXpGained = 0; // Reset total XP gained
 		
 		// Initialize XP tracking with current XP values
 		if (client != null)
@@ -176,6 +188,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			lastDefenceXp = client.getSkillExperience(Skill.DEFENCE);
 			lastRangedXp = client.getSkillExperience(Skill.RANGED);
 			lastMagicXp = client.getSkillExperience(Skill.MAGIC);
+			lastHitpointsXp = client.getSkillExperience(Skill.HITPOINTS);
 		}
 		else
 		{
@@ -185,6 +198,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			lastDefenceXp = 0;
 			lastRangedXp = 0;
 			lastMagicXp = 0;
+			lastHitpointsXp = 0;
 		}
 		lastXpGainTime = 0;
 	}
@@ -205,14 +219,17 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		int xp = statChanged.getXp();
 		int estimatedDamage = 0;
 		boolean isRelevantXp = false;
+		int xpGained = 0;
 		
-		// Check if it's a combat skill and calculate estimated damage
+		// Track XP gains and calculate damage for DPS
 		switch (skill)
 		{
 			case ATTACK:
 				if (xp > lastAttackXp)
 				{
-					estimatedDamage = estimateDamageFromXp(xp - lastAttackXp);
+					xpGained = xp - lastAttackXp;
+					estimatedDamage = estimateDamageFromXp(xpGained);
+					totalXpGained += xpGained; // Add to total XP counter
 					lastAttackXp = xp;
 					isRelevantXp = true;
 				}
@@ -220,7 +237,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			case STRENGTH:
 				if (xp > lastStrengthXp)
 				{
-					estimatedDamage = estimateDamageFromXp(xp - lastStrengthXp);
+					xpGained = xp - lastStrengthXp;
+					estimatedDamage = estimateDamageFromXp(xpGained);
+					totalXpGained += xpGained; // Add to total XP counter
 					lastStrengthXp = xp;
 					isRelevantXp = true;
 				}
@@ -228,7 +247,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			case DEFENCE:
 				if (xp > lastDefenceXp)
 				{
-					estimatedDamage = estimateDamageFromXp(xp - lastDefenceXp);
+					xpGained = xp - lastDefenceXp;
+					estimatedDamage = estimateDamageFromXp(xpGained);
+					totalXpGained += xpGained; // Add to total XP counter
 					lastDefenceXp = xp;
 					isRelevantXp = true;
 				}
@@ -236,7 +257,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			case RANGED:
 				if (xp > lastRangedXp)
 				{
-					estimatedDamage = estimateDamageFromXp(xp - lastRangedXp);
+					xpGained = xp - lastRangedXp;
+					estimatedDamage = estimateDamageFromXp(xpGained);
+					totalXpGained += xpGained; // Add to total XP counter
 					lastRangedXp = xp;
 					isRelevantXp = true;
 				}
@@ -244,22 +267,34 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			case MAGIC:
 				if (xp > lastMagicXp)
 				{
-					estimatedDamage = estimateDamageFromXp(xp - lastMagicXp);
+					xpGained = xp - lastMagicXp;
+					estimatedDamage = estimateDamageFromXp(xpGained);
+					totalXpGained += xpGained; // Add to total XP counter
 					lastMagicXp = xp;
 					isRelevantXp = true;
+				}
+				break;
+			case HITPOINTS:
+				if (xp > lastHitpointsXp)
+				{
+					// Track Hitpoints XP for total XP display, but don't count it for DPS
+					xpGained = xp - lastHitpointsXp;
+					totalXpGained += xpGained;
+					lastHitpointsXp = xp;
+					// Log Hitpoints XP gain
+					log.debug("Hitpoints XP gained: {}, Total XP: {}", xpGained, totalXpGained);
 				}
 				break;
 			default:
 				break;
 		}
 		
-		// If we got relevant XP and it's been more than the timeout since last XP gain
+		// If we got relevant XP for DPS calculation
 		if (isRelevantXp && estimatedDamage > 0)
 		{
 			long currentTime = System.currentTimeMillis();
 			
-			// Only process if it's been more than the timeout since last XP gain
-			// This helps prevent double-counting damage that was already tracked via hitsplats
+			// Only process damage if it's been more than the timeout since last XP gain
 			if (currentTime - lastXpGainTime > XP_GAIN_TIMEOUT)
 			{
 				// If we're not tracking a fight yet, start now
@@ -279,8 +314,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					currentDps = (double) totalDamage / (currentDuration / 1000.0);
 				}
 				
-				log.debug("XP-based damage on Gemstone Crab: {}. Total damage: {}, DPS: {}", 
-					estimatedDamage, totalDamage, currentDps);
+				log.debug("XP-based damage on Gemstone Crab: {}. Total damage: {}, DPS: {}, XP gained: {}", 
+					estimatedDamage, totalDamage, currentDps, totalXpGained);
 			}
 			
 			// Update last XP gain time
@@ -311,9 +346,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			notificationSent = false;
 			
 			// Start a new DPS tracking session
+			// This is where we reset stats - when a new boss spawns
 			resetDpsTracking();
 			fightInProgress = true;
 			fightStartTime = System.currentTimeMillis();
+			log.debug("New boss spawned, resetting DPS stats");
 		}
 	}
 	
@@ -328,7 +365,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			bossPresent = false;
 			notificationSent = false;
 			
-			// Finalize DPS tracking
+			// Finalize DPS tracking but don't reset stats
 			if (fightInProgress)
 			{
 				fightDuration = System.currentTimeMillis() - fightStartTime;
@@ -339,8 +376,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 				{
 					currentDps = (double) totalDamage / (fightDuration / 1000.0);
 				}
-				log.debug("Fight ended. Total damage: {}, Duration: {}s, DPS: {}", 
-					totalDamage, fightDuration / 1000.0, currentDps);
+				log.debug("Fight ended. Total damage: {}, Duration: {}s, DPS: {}, XP gained: {}", 
+					totalDamage, fightDuration / 1000.0, currentDps, totalXpGained);
 			}
 			
 			// When the boss dies, find and highlight the nearest tunnel
@@ -356,6 +393,46 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		// Check if player is in any of the Gemstone Crab areas
+		boolean playerInArea = isPlayerInGemstoneArea();
+		
+		// If player left the area, reset tracking
+		if (!playerInArea && (bossPresent || fightInProgress))
+		{
+			// Player left the area
+			bossPresent = false;
+			
+			// Reset tunnel highlighting
+			shouldHighlightTunnel = false;
+			nearestTunnel = null;
+			
+			// If we were tracking a fight, stop tracking
+			if (fightInProgress)
+			{
+				fightInProgress = false;
+				resetDpsTracking();
+			}
+			
+			log.debug("Player left Gemstone Crab area, resetting tracking");
+			return;
+		}
+		
+		// Check for boss HP bar to detect boss presence when re-entering the area
+		if (playerInArea && !bossPresent)
+		{
+			Widget bossHpBar = client.getWidget(BOSS_HP_BAR_WIDGET_ID);
+			if (bossHpBar != null && !bossHpBar.isHidden())
+			{
+				// Boss is present but we weren't tracking it (player just entered area)
+				bossPresent = true;
+				notificationSent = false;
+				
+				// We don't reset DPS tracking here anymore
+				// Only track if there's an actual NPC (not just HP bar)
+				log.debug("Re-entered area with boss HP bar visible");
+			}
+		}
+		
 		// Check boss HP for notification
 		if (bossPresent && config.enableNotifications() && !notificationSent)
 		{
@@ -393,6 +470,50 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 		}
 	}
+	
+	/**
+	 * Check if the player is within any of the three Gemstone Crab areas
+	 * @return true if player is in any of the three areas
+	 */
+	public boolean isPlayerInGemstoneArea()
+	{
+		if (client == null || client.getLocalPlayer() == null)
+		{
+			return false;
+		}
+		
+		// Get player's world location
+		WorldPoint playerLocation = client.getLocalPlayer().getWorldLocation();
+		if (playerLocation == null)
+		{
+			return false;
+		}
+		
+		int x = playerLocation.getX();
+		int y = playerLocation.getY();
+		
+		// Area 1: between 1279, 3180 (bottom left corner) and 1267, 3166 (top right corner)
+		if (x >= 1267 && x <= 1279 && y >= 3166 && y <= 3180)
+		{
+			return true;
+		}
+		
+		// Area 2: between 1232, 3051 (bottom right) - 1250, 3037 (top left)
+		if (x >= 1232 && x <= 1250 && y >= 3037 && y <= 3051)
+		{
+			return true;
+		}
+		
+		// Area 3: between 1347, 3101 (top right) - 1357, 3124 (bottom left)
+		if (x >= 1347 && x <= 1357 && y >= 3101 && y <= 3124)
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	
+
 	
 	private void checkBossHpAndNotify()
 	{

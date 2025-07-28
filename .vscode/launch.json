@@ -4,7 +4,7 @@
 
         {
             "type": "java",
-            "name": "Run OptimalNode Plugin",
+            "name": "Run Gemstone Crab Timer Plugin",
             "request": "launch",
             "mainClass": "com.gimserenity.GemstoneCrabPluginTest",
             "projectName": "GemstoneCrabTimer",
