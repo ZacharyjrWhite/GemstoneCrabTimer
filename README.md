@@ -18,13 +18,15 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 
 ### DPS Tracker
 - Tracks your damage per second (DPS) against the Gemstone Crab boss
-- Shows total damage dealt, current DPS, and fight duration
+- Shows total damage dealt, current DPS, XP gained, and fight duration
 - Uses XP drops to accurately track damage in all combat styles
 - Supports all combat types: Melee (Attack, Strength, Defence), Ranged, and Magic
+- Tracks Hitpoints XP separately for display purposes
+- Stats remain visible after boss death until a new boss spawns or you leave the area
+- Position-based visibility ensures overlay only appears in Gemstone Crab areas
 - Can be toggled on/off in the configuration
 
-<img width="166" height="92" alt="image" src="https://github.com/user-attachments/assets/c0a9fbe9-fd2d-45d4-99a5-b97ac12e0f44" />
-
+<img width="193" height="117" alt="image" src="https://github.com/user-attachments/assets/284365cc-4655-41cc-8643-d652ee9c1e84" />
 
 ## Configuration Options
 
