@@ -23,7 +23,8 @@ A RuneLite plugin for enhancing the Gemstone Crab boss afk experience.
 - Supports all combat types: Melee (Attack, Strength, Defence), Ranged, and Magic
 - Can be toggled on/off in the configuration
 
-<img width="166" height="92" alt="image" src="https://github.com/user-attachments/assets/c0a9fbe9-fd2d-45d4-99a5-b97ac12e0f44" />
+<img width="193" height="117" alt="image" src="https://github.com/user-attachments/assets/284365cc-4655-41cc-8643-d652ee9c1e84" />
+
 
 
 ## Configuration Options
