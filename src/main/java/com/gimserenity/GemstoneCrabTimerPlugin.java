@@ -34,9 +34,9 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Gemstone Crab Timer",
-	description = "Tracks Gemstone Crab boss HP and sends notifications at threshold for a better afk experience.",
-	tags = {"boss", "hp", "notification", "gemstone", "crab"}
+	name = "Gemstone Crab",
+	description = "All-in-one Gemstone Crab plugin for a better afk and informational experience.",
+	tags = {"boss", "hp", "notification", "gemstone", "crab", "afk", "info", "tracker", "dps"}
 )
 public class GemstoneCrabTimerPlugin extends Plugin
 {
@@ -109,6 +109,13 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	// Track all tunnels in the scene
 	private final Map<WorldPoint, GameObject> tunnels = new HashMap<>();
 	
+	// Screen pulse tracking
+	
+	// Smooth time left tracking
+	private int lastHpPercent = 100;
+	private long lastHpUpdateTime = 0;
+	private static final long HP_UPDATE_INTERVAL = 6000; // HP bar updates every 6 seconds
+	
 	// DPS tracking variables
 	private int totalDamage = 0;
 	private long fightStartTime = 0;
@@ -145,7 +152,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Gemstone Crab Timer started!");
+		log.info("Gemstone Crab Plugin started!");
 		notificationSent = false;
 		shouldHighlightTunnel = false;
 		nearestTunnel = null;
@@ -181,6 +188,15 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		return shouldHighlightTunnel;
 	}
 	
+	/**
+	 * Checks if the screen pulse effect should be active
+	 * @return true if the pulse effect should be shown
+	 */
+	public boolean shouldPulseScreen()
+	{
+		return config.pulseScreen() && shouldHighlightTunnel;
+	}
+	
 	// DPS tracking getter methods
 	public int getTotalDamage()
 	{
@@ -208,6 +224,48 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			return (System.currentTimeMillis() - fightStartTime);
 		}
 		return fightDuration;
+	}
+	
+	public long getEstimatedTimeRemainingMillis()
+	{
+		if (!bossPresent || !fightInProgress)
+		{
+			return 0;
+		}
+		
+		Widget bossHpBar = client.getWidget(BOSS_HP_BAR_WIDGET_ID);
+		if (bossHpBar == null || bossHpBar.isHidden() || bossHpBar.getText() == null)
+		{
+			return 0;
+		}
+		
+		try
+		{
+			// Get current HP percentage from widget
+			int currentHpPercent = Integer.parseInt(bossHpBar.getText().replace("%", "").trim());
+			currentHpPercent = Math.max(1, Math.min(currentHpPercent, 100));
+			
+			// Update our tracking variables when HP changes
+			if (currentHpPercent != lastHpPercent)
+			{
+				lastHpPercent = currentHpPercent;
+				lastHpUpdateTime = System.currentTimeMillis();
+			}
+			
+			// Calculate interpolated HP percentage based on time since last update
+			long timeSinceUpdate = System.currentTimeMillis() - lastHpUpdateTime;
+			// HP decreases at a rate of 1% every 6 seconds
+			double interpolatedHpPercent = Math.max(0, lastHpPercent - (timeSinceUpdate / (double) HP_UPDATE_INTERVAL));
+			
+			// Calculate time left based on interpolated HP
+			double timeLeftSeconds = (interpolatedHpPercent / 100.0) * 600;
+			return (long) (timeLeftSeconds * 1000);
+		}
+		catch (NumberFormatException e)
+		{
+			log.debug("Failed to parse HP percentage for countdown");
+			return 0;
+		}
 	}
 	
 	public boolean isFightInProgress()
@@ -474,7 +532,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 				bossPresent = true;
 				notificationSent = false;
 				
-				// We don't reset DPS tracking here anymore
 				// Only track if there's an actual NPC (not just HP bar)
 				log.debug("Re-entered area with boss HP bar visible");
 			}

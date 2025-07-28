@@ -47,12 +47,12 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
         
         // Set up the panel
         panelComponent.getChildren().clear();
-        panelComponent.setBackgroundColor(new Color(18, 18, 18)); // Dark background
+        panelComponent.setBackgroundColor(new Color(18, 18, 18, 180)); // Dark background
         panelComponent.setPreferredSize(new Dimension(150, 0));
         
         // Add title
         panelComponent.getChildren().add(TitleComponent.builder()
-            .text("Gemstone Crab DPS")
+            .text("Gemstone Crab Stats")
             .color(Color.GREEN)
             .build());
         
@@ -82,6 +82,20 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                 .left("Duration:")
                 .right(String.format("%d:%02d", seconds / 60, seconds % 60))
                 .build());
+        }
+        
+        // Add estimated time left
+        if (plugin.isFightInProgress())
+        {
+            long timeLeftMillis = plugin.getEstimatedTimeRemainingMillis();
+            if (timeLeftMillis > 0)
+            {
+                long secondsLeft = timeLeftMillis / 1000;
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Time Left:")
+                    .right(String.format("%d:%02d", secondsLeft / 60, secondsLeft % 60))
+                    .build());
+            }
         }
         
         return panelComponent.render(graphics);
