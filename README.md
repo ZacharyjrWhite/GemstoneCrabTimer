@@ -28,7 +28,7 @@ An all-in-one RuneLite plugin for enhancing the Gemstone Crab boss experience.
 - Position-based visibility ensures overlay only appears in Gemstone Crab areas
 - Can be toggled on/off in the configuration
 
-<img width="193" height="117" alt="image" src="https://github.com/user-attachments/assets/284365cc-4655-41cc-8643-d652ee9c1e84" />
+<img width="195" height="137" alt="image" src="https://github.com/user-attachments/assets/35e551eb-741c-49a0-8ad8-2f18c6d87ef1" />
 
 ## Configuration Options
 
