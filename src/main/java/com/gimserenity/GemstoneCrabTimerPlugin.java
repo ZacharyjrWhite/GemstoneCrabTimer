@@ -439,12 +439,10 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			checkBossHpAndNotify();
 		}
 		
-		// If boss respawns, reset tunnel highlighting
-		if (bossPresent && shouldHighlightTunnel)
-		{
-			shouldHighlightTunnel = false;
-			nearestTunnel = null;
-		}
+		// We don't reset tunnel highlighting here anymore
+		// Tunnel highlighting is now only reset when:
+		// 1. A new boss spawns (in onNpcSpawned)
+		// 2. Player leaves the area (earlier in this method)
 	}
 
 	@Subscribe
