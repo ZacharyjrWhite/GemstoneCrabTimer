@@ -6,7 +6,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
-
 import javax.inject.Inject;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -52,7 +51,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
         
         // Add title
         panelComponent.getChildren().add(TitleComponent.builder()
-            .text("Gemstone Crab Stats")
+            .text("Gemstone Crab")
             .color(Color.GREEN)
             .build());
         
@@ -97,6 +96,50 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                     .build());
             }
         }
+
+        if (config.showOverlay()) {
+            panelComponent.getChildren().add(TitleComponent.builder()
+                .text("Kill Stats")
+                .color(Color.GREEN)
+                .build());
+
+            if (config.displayKillCount()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Crabs Killed:")
+                    .right(String.valueOf(plugin.getCrabCount()))
+                    .build());
+            }
+
+            if (config.displayMiningAttempts()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Mining Attempts:")
+                    .right(String.valueOf(plugin.getMiningAttemptsCount()))
+                    .build());
+            }
+
+
+            if (config.displayMinedCount()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Successful:")
+                    .right(String.valueOf(plugin.getMinedCount()))
+                    .build());
+            }
+
+            if (config.displayFailedMiningCount()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Failed:")
+                    .right(String.valueOf(plugin.getMiningFailedCount()))
+                    .build());
+            }
+
+            if (config.displayFailedMiningCount()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Gems Mined:")
+                    .right(String.valueOf(plugin.getGemsCount()))
+                    .build());
+            }
+        }
+
         
         return panelComponent.render(graphics);
     }
