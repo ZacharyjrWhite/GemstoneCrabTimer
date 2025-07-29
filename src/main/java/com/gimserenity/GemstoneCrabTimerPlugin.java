@@ -1,14 +1,18 @@
 package com.gimserenity;
 
+import java.awt.Color;
+
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.NPC;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
@@ -18,6 +22,7 @@ import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -45,6 +50,32 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	// Maximum distance to highlight tunnel (in tiles)
 	private static final int MAX_TUNNEL_DISTANCE = 20;
+
+	// Distance from the crab to considered in the area
+	private static final int DISTANCE_THRESHOLD = 13; 
+
+	// Minutes at the boss required to count as a kill
+	// Also, used as a cooldown for mining so its not counted multiple times
+	private static final long KILL_THRESHOLD_MILLISECONDS = 5*60*1000; // 5 minutes
+
+	// Location of each crab from its center
+	private static final WorldPoint EAST_CRAB = new WorldPoint(1353, 3112, 0);
+	private static final WorldPoint SOUTH_CRAB = new WorldPoint(1239,3043, 0);
+	private static final WorldPoint NORTH_CRAB = new WorldPoint(1273,3173, 0);
+
+	// Crab Chat messages
+	private static final String GEMSTONE_CRAB_DEATH_MESSAGE = "The gemstone crab burrows away, leaving a piece of its shell behind.";
+	private static final String GEMSTONE_CRAB_MINE_SUCCESS_MESSAGE = "You swing your pick at the crab shell.";
+	private static final String GEMSTONE_CRAB_MINE_FAIL_MESSAGE = "Your understanding of the gemstone crab is not great enough to mine its shell.";
+	private static final String GEMSTONE_CRAB_GEM_MINE_MESSAGE = "You mine an uncut ";
+
+	// Configuration keys
+	private static final String CONFIG_GROUP = "gemstonecrab";
+    private static final String CONFIG_KEY_COUNT = "crabCount";
+	private static final String CONFIG_KEY_MINING_ATTEMPTS = "miningAttemptsCount";
+	private static final String CONFIG_KEY_MINED = "minedCount";
+	private static final String CONFIG_KEY_FAILED = "failedMiningCount";
+	private static final String CONFIG_KEY_GEMS_MINED = "gemsMined";
 	
 	@Inject
 	private Client client;
@@ -56,7 +87,13 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private Notifier notifier;
 	
 	@Inject
+    private ConfigManager configManager;
+
+	@Inject
 	private OverlayManager overlayManager;
+
+	@Inject
+    private GemstoneCrabUtil util;
 	
 	// Track if we've already sent a notification for this boss fight
 	private boolean notificationSent = false;
@@ -98,6 +135,16 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private long lastXpGainTime = 0;
 	private static final long XP_GAIN_TIMEOUT = 1000; // 1 second timeout for XP gains
 
+	// Kill tracking variables
+	private int crabCount;
+	private long lastMiningAttempt;
+
+	// Mining stats tracking variables
+	private int minedCount;
+	private int miningAttempts;
+	private int miningFailedCount;
+	private int gemsMined;
+
 	// Overlay for highlighting tunnels
 	@Inject
 	private GemstoneCrabTimerOverlay overlay;
@@ -114,6 +161,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		nearestTunnel = null;
 		tunnels.clear();
 		resetDpsTracking();
+		loadSavedConfiguration();
 		overlayManager.add(overlay);
 		overlayManager.add(dpsOverlay);
 	}
@@ -223,10 +271,29 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		}
 	}
 	
-	public boolean isFightInProgress()
-	{
+	public boolean isFightInProgress() {
 		return fightInProgress;
 	}
+
+	public int getCrabCount() {
+        return crabCount;
+    }
+
+	public int getMinedCount() {
+        return minedCount;
+    }
+
+	public int getMiningAttemptsCount() {
+        return miningAttempts;
+    }
+
+	public int getMiningFailedCount() {
+        return miningFailedCount;
+    }
+
+	public int getGemsCount() {
+        return gemsMined;
+    }
 	
 	//Reset all DPS tracking variables
 	private void resetDpsTracking()
@@ -261,6 +328,16 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		lastXpGainTime = 0;
 	}
 	
+	/*
+	 * Load any saved configuration values
+	 */
+	private void loadSavedConfiguration(){
+        crabCount = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_COUNT);
+		miningAttempts = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_MINING_ATTEMPTS);
+		minedCount = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_MINED);
+		miningFailedCount = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_FAILED);
+		gemsMined = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_GEMS_MINED);
+	}
 
 	
 	@Subscribe
@@ -403,6 +480,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			resetDpsTracking();
 			fightInProgress = true;
 			fightStartTime = System.currentTimeMillis();
+			setLastMiningAttempt();
 			log.debug("New boss spawned, resetting DPS stats");
 		}
 	}
@@ -429,6 +507,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 				{
 					currentDps = (double) totalDamage / (fightDuration / 1000.0);
 				}
+
+				updateKillStats();
+
 				log.debug("Fight ended. Total damage: {}, Duration: {}s, DPS: {}, XP gained: {}", 
 					totalDamage, fightDuration / 1000.0, currentDps, totalXpGained);
 			}
@@ -515,6 +596,39 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 		}
 	}
+
+	/*
+	 * Handles Gemstone Crab Mining Events
+	 * Mining Attempt, Success, and Failure
+	 */
+    @Subscribe
+    public void onChatMessage(ChatMessage chatMessage) {
+        if (chatMessage.getType() == ChatMessageType.GAMEMESSAGE || 
+			chatMessage.getType() == ChatMessageType.SPAM) {  	
+			String message = chatMessage.getMessage();
+			
+			if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_SUCCESS_MESSAGE)) {
+				if (!isMiningBeforeCooldown()) {
+					log.info("Gemstone Crab successfully mined!");
+					miningAttempts++;
+					minedCount++;
+					setLastMiningAttempt();
+				}
+			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_FAIL_MESSAGE)) {
+				if (!isMiningBeforeCooldown()) {
+					log.info("Failed to mine Gemstone Crab!");
+					miningAttempts++;
+					miningFailedCount++;
+					setLastMiningAttempt();
+				}		
+			} else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
+				log.debug("Gem mined");
+				gemsMined++;
+			}
+			saveCrabCounts();
+        }
+	}
+
 	
 	/**
 	 * Check if the player is within any of the three Gemstone Crab areas
@@ -534,31 +648,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			return false;
 		}
 		
-		int x = playerLocation.getX();
-		int y = playerLocation.getY();
-		
-		// Area 1: between 1279, 3180 (bottom left corner) and 1267, 3166 (top right corner)
-		if (x >= 1267 && x <= 1279 && y >= 3166 && y <= 3180)
-		{
-			return true;
-		}
-		
-		// Area 2: between 1232, 3051 (bottom right) - 1250, 3037 (top left)
-		if (x >= 1232 && x <= 1250 && y >= 3037 && y <= 3051)
-		{
-			return true;
-		}
-		
-		// Area 3: between 1347, 3101 (top right) - 1357, 3124 (bottom left)
-		if (x >= 1347 && x <= 1357 && y >= 3101 && y <= 3124)
-		{
-			return true;
-		}
-		
-		return false;
+		// Checks if player is close enough to any of the crabs
+		return playerLocation.distanceTo2D(EAST_CRAB) <= DISTANCE_THRESHOLD 
+			|| playerLocation.distanceTo2D(SOUTH_CRAB) <= DISTANCE_THRESHOLD 
+			|| playerLocation.distanceTo2D(NORTH_CRAB) <= DISTANCE_THRESHOLD;
 	}
-	
-
 	
 	private void checkBossHpAndNotify()
 	{
@@ -631,7 +725,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 		}
 	}
-	
 
 	// Find the nearest tunnel to the player
 	private void findNearestTunnel()
@@ -659,6 +752,55 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		
 		nearestTunnel = closest;
 		log.debug("Found nearest tunnel at distance: {}", closestDistance);
+	}
+
+	/*
+	 * Save all the kill and mining stats
+	 */
+	private void saveCrabCounts() {
+        configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_COUNT, String.valueOf(crabCount));
+		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_MINING_ATTEMPTS, String.valueOf(miningAttempts));
+		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_MINED, String.valueOf(minedCount));
+		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_FAILED, String.valueOf(miningFailedCount));
+    }
+
+	/*
+	 * Set the last mining attempt time
+	 */
+	private void setLastMiningAttempt() {
+		lastMiningAttempt = System.currentTimeMillis();
+	}
+
+	/*
+	 * Used to stop mining from counting multiple times
+	 */
+	private boolean isMiningBeforeCooldown() {
+		return isValidKill() && (System.currentTimeMillis() < lastMiningAttempt + KILL_THRESHOLD_MILLISECONDS);
+	}
+
+	/*
+	 * Crab was alive at least 5mins and player was attacking it at least once
+	 */
+	private boolean isValidKill() {
+		return fightDuration > KILL_THRESHOLD_MILLISECONDS;
+	}
+
+	/*
+	 * Update kill stats and send client messages
+	 */
+	private void updateKillStats() {
+		if (isValidKill()) {
+			crabCount++;
+			saveCrabCounts();
+			log.debug("Gemstone crab killed! KC: {}", crabCount);
+			String msg = new ChatMessageBuilder().append(Color.RED, String.format("Gemstone Crab Killed! KC: %d", crabCount)).build();
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
+		}
+		else {
+			log.debug("Gemstone crab kill did not count!");
+			String msg = new ChatMessageBuilder().append(Color.MAGENTA, String.format("Gemstone Crab not fought long enough for kill count.")).build();
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
+		}
 	}
 
 	@Provides

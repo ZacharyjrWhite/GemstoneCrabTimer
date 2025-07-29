@@ -4,15 +4,24 @@ import java.awt.Color;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
 
 @ConfigGroup("gemstonecrab")
 public interface GemstoneCrabTimerConfig extends Config
 {
+	@ConfigSection(
+		name = "Notifications",
+		description = "Notifications",
+		position = 0
+	)
+	String notificationList = "notificationList";
+	
 	@ConfigItem(
 		keyName = "enableNotifications",
 		name = "Enable Notifications",
-		description = "Enable desktop notifications when Gemstone Crab reaches HP threshold"
+		description = "Enable desktop notifications when Gemstone Crab reaches HP threshold",
+		section = notificationList
 	)
 	default boolean enableNotifications()
 	{
@@ -26,7 +35,8 @@ public interface GemstoneCrabTimerConfig extends Config
 	@ConfigItem(
 		keyName = "hpThreshold",
 		name = "HP Threshold %",
-		description = "Send notification when Gemstone Crab HP reaches this percentage"
+		description = "Send notification when Gemstone Crab HP reaches this percentage",
+		section = notificationList
 	)
 	default int hpThreshold()
 	{
@@ -36,47 +46,19 @@ public interface GemstoneCrabTimerConfig extends Config
 	@ConfigItem(
 		keyName = "notificationMessage",
 		name = "Notification Message",
-		description = "Message to show in the notification"
+		description = "Message to show in the notification",
+		section = notificationList
 	)
 	default String notificationMessage()
 	{
 		return "Gemstone Crab HP threshold reached!";
 	}
-	
-	@ConfigItem(
-		keyName = "highlightTunnel",
-		name = "Highlight Tunnel",
-		description = "Highlight the nearest tunnel after boss death"
-	)
-	default boolean highlightTunnel()
-	{
-		return true;
-	}
-	
-	@ConfigItem(
-		keyName = "tunnelHighlightColor",
-		name = "Tunnel Highlight Color",
-		description = "Color to highlight the tunnel with"
-	)
-	default Color tunnelHighlightColor()
-	{
-		return Color.GREEN;
-	}
-	
-	@ConfigItem(
-		keyName = "showDpsTracker",
-		name = "Show Stats Overlay",
-		description = "Display damage, DPS, gems collected and other information during boss fights"
-	)
-	default boolean showDpsTracker()
-	{
-		return true;
-	}
-	
+
 	@ConfigItem(
 		keyName = "pulseScreen",
 		name = "Pulse Screen",
-		description = "Pulse the screen overlay when the tunnel is highlighted"
+		description = "Pulse the screen overlay when the tunnel is highlighted",
+		section = notificationList
 	)
 	default boolean pulseScreen()
 	{
@@ -86,10 +68,138 @@ public interface GemstoneCrabTimerConfig extends Config
 	@ConfigItem(
 		keyName = "pulseColor",
 		name = "Pulse Color",
-		description = "Color of the screen pulse"
+		description = "Color of the screen pulse",
+		section = notificationList
 	)
 	default Color pulseColor()
 	{
 		return new Color(255, 0, 0, 128); // Semi-transparent red
 	}
+
+		
+	@ConfigSection(
+		name = "Highlights",
+		description = "Highlight settings",
+		position = 1
+	)
+	String highlights = "highlights";
+	
+	@ConfigItem(
+		keyName = "highlightTunnel",
+		name = "Highlight Tunnel",
+		description = "Highlight the nearest tunnel after boss death",
+		section = highlights
+	)
+	default boolean highlightTunnel()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "tunnelHighlightColor",
+		name = "Tunnel Highlight Color",
+		description = "Color to highlight the tunnel with",
+		section = highlights
+	)
+	default Color tunnelHighlightColor()
+	{
+		return Color.GREEN;
+	}
+
+	@ConfigSection(
+		name = "DPS Tracking",
+		description = "DPS Tracking",
+		position = 2
+	)
+	String dpsTracking = "dpsTracking";
+	
+	@ConfigItem(
+		keyName = "showDpsTracker",
+		name = "Show Stats Overlay",
+		description = "Display damage, DPS, gems collected and other information during boss fights",
+		section = dpsTracking
+	)
+	default boolean showDpsTracker()
+	{
+		return true;
+	}
+
+	@ConfigSection(
+		name = "Stat Tracking",
+		description = "Stat Tracking",
+		position = 3
+	)
+	String statTracking = "statTracking";
+
+	@ConfigItem(
+        keyName = "showOverlay",
+        name = "Show overlay",
+        description = "Show the gemstone crab count overlay",
+		section = statTracking,
+		position = 0
+    )
+    default boolean showOverlay()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+        keyName = "displayKillCount",
+        name = "Display kill count",
+        description = "Display total Gemstone Crab kill count in overlay",
+		section = statTracking,
+		position = 1
+    )
+    default boolean displayKillCount()
+    {
+        return true;
+    }
+
+	@ConfigItem(
+        keyName = "displayMiningAttempts",
+        name = "Display total mining attempts",
+        description = "Display total Gemstone Crabs attempts at mining in overlay",
+		section = statTracking,
+		position = 2
+    )
+    default boolean displayMiningAttempts()
+    {
+        return false;
+    }
+
+	@ConfigItem(
+        keyName = "displayMinedCount",
+        name = "Display total successful",
+        description = "Display total successful mining attempts at Gemstone Crabs in overlay",
+		section = statTracking,
+		position = 3
+    )
+    default boolean displayMinedCount()
+    {
+        return false;
+    }
+
+	@ConfigItem(
+        keyName = "displayFailedMiningCount",
+        name = "Display total failed",
+        description = "Display total failed mining attempts at Gemstone Crabs in the overlay",
+		section = statTracking,
+		position = 4
+    )
+    default boolean displayFailedMiningCount()
+    {
+        return false;
+    }
+
+	@ConfigItem(
+        keyName = "displayGemCount",
+        name = "Display total gems mined",
+        description = "Display total gems mined at Gemstone Crabs in the overlay",
+		section = statTracking,
+		position = 5
+    )
+    default boolean displayGemCount()
+    {
+        return false;
+    }
 }
