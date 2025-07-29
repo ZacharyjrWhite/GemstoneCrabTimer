@@ -573,6 +573,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		}
 	}
 
+
+
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
@@ -596,6 +598,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 		}
 	}
+	
+
 
 	/*
 	 * Handles Gemstone Crab Mining Events
@@ -609,14 +613,14 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			
 			if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_SUCCESS_MESSAGE)) {
 				if (!isMiningBeforeCooldown()) {
-					log.info("Gemstone Crab successfully mined!");
+					log.debug("Gemstone Crab successfully mined!");
 					miningAttempts++;
 					minedCount++;
 					setLastMiningAttempt();
 				}
 			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_FAIL_MESSAGE)) {
 				if (!isMiningBeforeCooldown()) {
-					log.info("Failed to mine Gemstone Crab!");
+					log.debug("Failed to mine Gemstone Crab!");
 					miningAttempts++;
 					miningFailedCount++;
 					setLastMiningAttempt();
@@ -627,6 +631,22 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 			saveCrabCounts();
         }
+		// Handle chat commands
+		else if (chatMessage.getType() == ChatMessageType.PUBLICCHAT || 
+			chatMessage.getType() == ChatMessageType.PRIVATECHAT || 
+			chatMessage.getType() == ChatMessageType.FRIENDSCHAT || 
+			chatMessage.getType() == ChatMessageType.CLAN_CHAT || 
+			chatMessage.getType() == ChatMessageType.CLAN_GUEST_CHAT ||
+			chatMessage.getType() == ChatMessageType.CLAN_GIM_CHAT) {
+			
+			String message = chatMessage.getMessage();
+			
+			// Check for the reset stats command
+			if (message.equalsIgnoreCase("!Resetgemcrab")) {
+				log.debug("Reset stats command received");
+				resetStats();
+			}
+		}
 	}
 
 	
@@ -762,7 +782,30 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_MINING_ATTEMPTS, String.valueOf(miningAttempts));
 		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_MINED, String.valueOf(minedCount));
 		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_FAILED, String.valueOf(miningFailedCount));
+		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_GEMS_MINED, String.valueOf(gemsMined));
     }
+	
+	/*
+	 * Reset all mining and gem statistics
+	 */
+	public void resetStats() {
+		// Reset all stats variables
+		crabCount = 0;
+		miningAttempts = 0;
+		minedCount = 0;
+		miningFailedCount = 0;
+		gemsMined = 0;
+		
+		// Save the reset values to config
+		saveCrabCounts();
+		
+		// Notify the user
+		if (client != null) {
+			String msg = new ChatMessageBuilder().append(Color.GREEN, "All Gemstone Crab statistics have been reset.").build();
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
+			log.debug("All Gemstone Crab statistics have been reset");
+		}
+	}
 
 	/*
 	 * Set the last mining attempt time

@@ -32,12 +32,6 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
     @Override
     public Dimension render(Graphics2D graphics)
     {
-        // Don't render if DPS tracking is disabled in config
-        if (!config.showDpsTracker())
-        {
-            return null;
-        }
-        
         // Don't render if player is not in a Gemstone Crab area
         if (!plugin.isPlayerInGemstoneArea())
         {
@@ -49,51 +43,58 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
         panelComponent.setBackgroundColor(new Color(18, 18, 18, 180)); // Dark background
         panelComponent.setPreferredSize(new Dimension(150, 0));
         
-        // Add title
-        panelComponent.getChildren().add(TitleComponent.builder()
-            .text("Gemstone Crab")
-            .color(Color.GREEN)
-            .build());
-        
-        // Add total damage
-        panelComponent.getChildren().add(LineComponent.builder()
-            .left("Total Damage:")
-            .right(String.format("%,d", plugin.getTotalDamage()))
-            .build());
-        
-        // Add DPS
-        panelComponent.getChildren().add(LineComponent.builder()
-            .left("DPS:")
-            .right(DPS_FORMAT.format(plugin.getCurrentDps()))
-            .build());
-        
-        // Add XP gained
-        panelComponent.getChildren().add(LineComponent.builder()
-            .left("XP Gained:")
-            .right(String.format("%,d", plugin.getTotalXpGained()))
-            .build());
-
-        // Add fight duration
-        if (plugin.isFightInProgress() || plugin.getFightDuration() > 0)
+        // Show main stats section if enabled
+        if (config.showMainStats())
         {
-            long seconds = plugin.getFightDuration() / 1000;
-            panelComponent.getChildren().add(LineComponent.builder()
-                .left("Duration:")
-                .right(String.format("%d:%02d", seconds / 60, seconds % 60))
+            // Add title
+            panelComponent.getChildren().add(TitleComponent.builder()
+                .text("Current Fight")
+                .color(Color.GREEN)
                 .build());
-        }
-        
-        // Add estimated time left
-        if (plugin.isFightInProgress())
-        {
-            long timeLeftMillis = plugin.getEstimatedTimeRemainingMillis();
-            if (timeLeftMillis > 0)
-            {
-                long secondsLeft = timeLeftMillis / 1000;
+                
+            // Add total damage if enabled
+            if (config.displayTotalDamage()) {
                 panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Time Left:")
-                    .right(String.format("%d:%02d", secondsLeft / 60, secondsLeft % 60))
+                    .left("Total Damage:")
+                    .right(String.format("%,d", plugin.getTotalDamage()))
                     .build());
+            }
+            
+            // Add DPS if enabled
+            if (config.displayDps()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("DPS:")
+                    .right(DPS_FORMAT.format(plugin.getCurrentDps()))
+                    .build());
+            }
+            
+            // Add XP gained if enabled
+            if (config.displayXpGained()) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("XP Gained:")
+                    .right(String.format("%,d", plugin.getTotalXpGained()))
+                    .build());
+            }
+            
+            // Add fight duration if enabled
+            if (config.displayDuration()) {
+                long seconds = plugin.getFightDuration() / 1000;
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Duration:")
+                    .right(String.format("%d:%02d", seconds / 60, seconds % 60))
+                    .build());
+            }
+            
+            // Add estimated time left if enabled
+            if (config.displayTimeLeft() && plugin.isFightInProgress()) {
+                long timeLeftMillis = plugin.getEstimatedTimeRemainingMillis();
+                if (timeLeftMillis > 0) {
+                    long secondsLeft = timeLeftMillis / 1000;
+                    panelComponent.getChildren().add(LineComponent.builder()
+                        .left("Time Left:")
+                        .right(String.format("%d:%02d", secondsLeft / 60, secondsLeft % 60))
+                        .build());
+                }
             }
         }
 

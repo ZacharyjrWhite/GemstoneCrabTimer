@@ -107,19 +107,80 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 
 	@ConfigSection(
-		name = "DPS Tracking",
-		description = "DPS Tracking",
+		name = "Current Fight Tracking",
+		description = "Current Fight Information",
 		position = 2
 	)
-	String dpsTracking = "dpsTracking";
+	String currentFightTracking = "currentFightTracking";
 	
 	@ConfigItem(
-		keyName = "showDpsTracker",
-		name = "Show Stats Overlay",
-		description = "Display damage, DPS, gems collected and other information during boss fights",
-		section = dpsTracking
+		keyName = "showMainStats",
+		name = "Show overlay",
+		description = "Display damage, DPS, XP gained, duration and time left in the stats overlay",
+		section = currentFightTracking,
+		position = 0
 	)
-	default boolean showDpsTracker()
+	default boolean showMainStats()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayTotalDamage",
+		name = "Display total damage",
+		description = "Display total damage dealt in the current fight",
+		section = currentFightTracking,
+		position = 1
+	)
+	default boolean displayTotalDamage()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayDps",
+		name = "Display DPS",
+		description = "Display damage per second in the current fight",
+		section = currentFightTracking,
+		position = 2
+	)
+	default boolean displayDps()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayXpGained",
+		name = "Display XP gained",
+		description = "Display XP gained in the current fight",
+		section = currentFightTracking,
+		position = 3
+	)
+	default boolean displayXpGained()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayDuration",
+		name = "Display duration",
+		description = "Display duration of the current fight",
+		section = currentFightTracking,
+		position = 4
+	)
+	default boolean displayDuration()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayTimeLeft",
+		name = "Display time left",
+		description = "Display estimated time left in the current fight",
+		section = currentFightTracking,
+		position = 5
+	)
+	default boolean displayTimeLeft()
 	{
 		return true;
 	}
@@ -131,7 +192,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	)
 	String statTracking = "statTracking";
 
-	@ConfigItem(
+    @ConfigItem(
         keyName = "showOverlay",
         name = "Show overlay",
         description = "Show the gemstone crab count overlay",
