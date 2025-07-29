@@ -191,6 +191,13 @@ public interface GemstoneCrabTimerConfig extends Config
 		position = 3
 	)
 	String statTracking = "statTracking";
+	
+	@ConfigSection(
+		name = "Gem Tracking",
+		description = "Gem Tracking",
+		position = 4
+	)
+	String gemTracking = "gemTracking";
 
     @ConfigItem(
         keyName = "showOverlay",
@@ -263,4 +270,112 @@ public interface GemstoneCrabTimerConfig extends Config
     {
         return false;
     }
+	
+	@ConfigItem(
+		keyName = "showGemTracking",
+		name = "Show overlay",
+		description = "Display gem tracking section in the overlay",
+		section = gemTracking,
+		position = 0
+	)
+	default boolean showGemTracking()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayOpals",
+		name = "Display opals",
+		description = "Display opal count and percentage in the overlay",
+		section = gemTracking,
+		position = 1
+	)
+	default boolean displayOpals()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayJades",
+		name = "Display jades",
+		description = "Display jade count and percentage in the overlay",
+		section = gemTracking,
+		position = 2
+	)
+	default boolean displayJades()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayRedTopaz",
+		name = "Display red topaz",
+		description = "Display red topaz count and percentage in the overlay",
+		section = gemTracking,
+		position = 3
+	)
+	default boolean displayRedTopaz()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displaySapphires",
+		name = "Display sapphires",
+		description = "Display sapphire count and percentage in the overlay",
+		section = gemTracking,
+		position = 4
+	)
+	default boolean displaySapphires()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayEmeralds",
+		name = "Display emeralds",
+		description = "Display emerald count and percentage in the overlay",
+		section = gemTracking,
+		position = 5
+	)
+	default boolean displayEmeralds()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayRubies",
+		name = "Display rubies",
+		description = "Display ruby count and percentage in the overlay",
+		section = gemTracking,
+		position = 6
+	)
+	default boolean displayRubies()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayDiamonds",
+		name = "Display diamonds",
+		description = "Display diamond count and percentage in the overlay",
+		section = gemTracking,
+		position = 7
+	)
+	default boolean displayDiamonds()
+	{
+		return true;
+	}
+	
+	@ConfigItem(
+		keyName = "displayDragonstones",
+		name = "Display dragonstones",
+		description = "Display dragonstone count and percentage in the overlay",
+		section = gemTracking,
+		position = 8
+	)
+	default boolean displayDragonstones()
+	{
+		return true;
+	}
 }
