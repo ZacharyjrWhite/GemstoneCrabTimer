@@ -28,6 +28,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -140,7 +142,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private int lastMagicXp = 0;
 	private int lastHitpointsXp = 0; // Track Hitpoints XP for display only
 	private int totalXpGained = 0; // Total XP gained during the fight
-	private long lastXpGainTime = 0;
+	private int pendingCombatXp = 0;
+	// Tracks last XP value per skill
+	private final Map<Skill, Integer> lastXp = new EnumMap<>(Skill.class);
 	private static final long XP_GAIN_TIMEOUT = 1000; // 1 second timeout for XP gains
 
 	// Kill tracking variables
@@ -363,6 +367,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		currentDps = 0;
 		fightInProgress = false;
 		totalXpGained = 0; // Reset total XP gained
+		pendingCombatXp = 0;
+		lastXp.clear();
 		
 		// Initialize XP tracking with current XP values
 		if (client != null)
@@ -384,7 +390,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			lastMagicXp = 0;
 			lastHitpointsXp = 0;
 		}
-		lastXpGainTime = 0;
 	}
 	
 	/*
@@ -412,118 +417,41 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	@Subscribe
 	public void onStatChanged(StatChanged statChanged)
 	{
-		// Only process if boss is present and we're near it
 		if (!bossPresent)
 		{
 			return;
 		}
-		
-		// Get the skill that changed
+
 		Skill skill = statChanged.getSkill();
-		int xp = statChanged.getXp();
-		int estimatedDamage = 0;
-		boolean isRelevantXp = false;
-		int xpGained = 0;
-		
-		// Track XP gains and calculate damage for DPS
+		int newXp = statChanged.getXp();
+
+		// Get the previous XP value (default to current XP if missing)
+		int previousXp = lastXp.getOrDefault(skill, newXp);
+		int delta = newXp - previousXp;
+
+		// Update the stored XP value
+		lastXp.put(skill, newXp);
+
+		// Ignore non-combat skills entirely
 		switch (skill)
 		{
 			case ATTACK:
-				if (xp > lastAttackXp)
-				{
-					xpGained = xp - lastAttackXp;
-					estimatedDamage = estimateDamageFromXp(xpGained);
-					totalXpGained += xpGained; // Add to total XP counter
-					lastAttackXp = xp;
-					isRelevantXp = true;
-				}
-				break;
 			case STRENGTH:
-				if (xp > lastStrengthXp)
-				{
-					xpGained = xp - lastStrengthXp;
-					estimatedDamage = estimateDamageFromXp(xpGained);
-					totalXpGained += xpGained; // Add to total XP counter
-					lastStrengthXp = xp;
-					isRelevantXp = true;
-				}
-				break;
 			case DEFENCE:
-				if (xp > lastDefenceXp)
-				{
-					xpGained = xp - lastDefenceXp;
-					estimatedDamage = estimateDamageFromXp(xpGained);
-					totalXpGained += xpGained; // Add to total XP counter
-					lastDefenceXp = xp;
-					isRelevantXp = true;
-				}
-				break;
 			case RANGED:
-				if (xp > lastRangedXp)
-				{
-					xpGained = xp - lastRangedXp;
-					estimatedDamage = estimateDamageFromXp(xpGained);
-					totalXpGained += xpGained; // Add to total XP counter
-					lastRangedXp = xp;
-					isRelevantXp = true;
-				}
-				break;
 			case MAGIC:
-				if (xp > lastMagicXp)
+				if (delta > 0)
 				{
-					xpGained = xp - lastMagicXp;
-					estimatedDamage = estimateDamageFromXp(xpGained);
-					totalXpGained += xpGained; // Add to total XP counter
-					lastMagicXp = xp;
-					isRelevantXp = true;
+					pendingCombatXp += delta;
 				}
 				break;
+
 			case HITPOINTS:
-				if (xp > lastHitpointsXp)
-				{
-					// Track Hitpoints XP for total XP display, but don't count it for DPS
-					xpGained = xp - lastHitpointsXp;
-					totalXpGained += xpGained;
-					lastHitpointsXp = xp;
-					// Log Hitpoints XP gain
-					log.debug("Hitpoints XP gained: {}, Total XP: {}", xpGained, totalXpGained);
-				}
+				log.debug("Hitpoints XP gained: {}", delta);
 				break;
+
 			default:
 				break;
-		}
-		
-		// If we got relevant XP for DPS calculation
-		if (isRelevantXp && estimatedDamage > 0)
-		{
-			long currentTime = System.currentTimeMillis();
-			
-			// Only process damage if it's been more than the timeout since last XP gain
-			if (currentTime - lastXpGainTime > XP_GAIN_TIMEOUT)
-			{
-				// If we're not tracking a fight yet, start now
-				if (!fightInProgress)
-				{
-					fightInProgress = true;
-					fightStartTime = currentTime;
-				}
-				
-				// Add the estimated damage to our total
-				totalDamage += estimatedDamage;
-				
-				// Update current DPS
-				long currentDuration = currentTime - fightStartTime;
-				if (currentDuration > 0)
-				{
-					currentDps = (double) totalDamage / (currentDuration / 1000.0);
-				}
-				
-				log.debug("XP-based damage on Gemstone Crab: {}. Total damage: {}, DPS: {}, XP gained: {}", 
-					estimatedDamage, totalDamage, currentDps, totalXpGained);
-			}
-			
-			// Update last XP gain time
-			lastXpGainTime = currentTime;
 		}
 	}
 	
@@ -639,6 +567,33 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		if (bossPresent && config.enableNotifications() && !notificationSent)
 		{
 			checkBossHpAndNotify();
+		}
+
+		// --- XP-based damage processing ---
+		if (bossPresent && pendingCombatXp > 0)
+		{
+			// Convert combat XP (summed across skills in onStatChanged) to damage
+			int estimatedDamage = estimateDamageFromXp(pendingCombatXp);
+			totalXpGained += pendingCombatXp;
+			pendingCombatXp = 0;
+
+			long currentTime = System.currentTimeMillis();
+			if (!fightInProgress)
+			{
+				fightInProgress = true;
+				fightStartTime = currentTime;
+			}
+
+			totalDamage += estimatedDamage;
+
+			long duration = currentTime - fightStartTime;
+			if (duration > 0)
+			{
+				currentDps = totalDamage / (duration / 1000.0);
+			}
+
+			log.debug("XP-based damage this tick: {} (total damage: {}, DPS: {})",
+				estimatedDamage, totalDamage, currentDps);
 		}
 	}
 
