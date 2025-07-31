@@ -106,6 +106,18 @@ public interface GemstoneCrabTimerConfig extends Config
 		return Color.GREEN;
 	}
 
+	@ConfigItem(
+		keyName = "tunnelTimeLeft",
+		name = "Display Time Left",
+		description = "Display time left until fight end over the tunnel",
+		section = highlights,
+		position = 3
+	)
+	default boolean tunnelTimeLeft()
+	{
+		return true;
+	}
+
 	@ConfigSection(
 		name = "Current Fight Tracking",
 		description = "Current Fight Information",

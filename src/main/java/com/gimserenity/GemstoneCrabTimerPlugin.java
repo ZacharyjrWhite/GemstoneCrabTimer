@@ -112,7 +112,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	// Track if the boss is present
 	private boolean bossPresent = false;
-	
+
+	private boolean fightEnded = false;
 	// Track if we should highlight the tunnel
 	private boolean shouldHighlightTunnel = false;
 	
@@ -220,7 +221,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	public boolean shouldPulseScreen()
 	{
 		boolean playerInArea = isPlayerInGemstoneArea();
-		return config.pulseScreen() && shouldHighlightTunnel && playerInArea;
+		return config.pulseScreen() && fightEnded && playerInArea;
 	}
 	
 	// DPS tracking getter methods
@@ -472,6 +473,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss spawned");
 			bossPresent = true;
 			notificationSent = false;
+			fightEnded = false;
 			
 			// Start a new DPS tracking session
 			// This is where we reset stats - when a new boss spawns
@@ -493,6 +495,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss despawned");
 			bossPresent = false;
 			notificationSent = false;
+			fightEnded = true;
 			
 			// Finalize DPS tracking but don't reset stats
 			if (fightInProgress)
@@ -527,6 +530,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	{
 		// Check if player is in any of the Gemstone Crab areas
 		boolean playerInArea = isPlayerInGemstoneArea();
+		
+		// Always find the nearest tunnel when in the area, even during the fight
+		if (playerInArea) {
+			findNearestTunnel();
+		}
 		
 		// If player left the area, reset tracking
 		if (!playerInArea && (bossPresent || fightInProgress))

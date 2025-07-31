@@ -37,34 +37,39 @@ public class GemstoneCrabTimerOverlay extends Overlay
     public Dimension render(Graphics2D graphics)
     {
         boolean renderTunnel = config.highlightTunnel() && plugin.getNearestTunnel() != null && plugin.shouldHighlightTunnel();
+        boolean showTimeLeft = config.tunnelTimeLeft() && plugin.getNearestTunnel() != null && plugin.getEstimatedTimeRemainingMillis() > 0;
         
-        if (renderTunnel)
+        GameObject tunnel = plugin.getNearestTunnel();
+        if (tunnel != null)
         {
-            GameObject tunnel = plugin.getNearestTunnel();
-            if (tunnel != null)
+            Color color = config.tunnelHighlightColor();
+            if (tunnel.getCanvasTextLocation(graphics, "Tunnel", 0) != null)
             {
-                Color color = config.tunnelHighlightColor();
-                if (tunnel.getCanvasTextLocation(graphics, "Tunnel", 0) != null)
+                Point textLocation = tunnel.getCanvasTextLocation(graphics, "Tunnel", 0);
+                if (textLocation != null)
                 {
-                    Point textLocation = tunnel.getCanvasTextLocation(graphics, "Tunnel", 0);
-                    if (textLocation != null)
+                    // Only render "Tunnel" text if we should highlight the tunnel
+                    if (renderTunnel)
                     {
                         OverlayUtil.renderTextLocation(graphics, textLocation, "Tunnel", color);
-                        
-                        // Countdown timer overlay above tunnel
+                    }
+                    
+                    // Always show countdown timer overlay above tunnel when in area
+                    if (showTimeLeft)
+                    {
                         long timeLeftMillis = plugin.getEstimatedTimeRemainingMillis();
-                        if (timeLeftMillis > 0)
-                        {
-                            long secondsLeft = timeLeftMillis / 1000;
-                            long minutes = secondsLeft / 60;
-                            long seconds = secondsLeft % 60;
-                            String countdownText = String.format("%d:%02d", minutes, seconds);
-                            Point countdownLocation = new Point(textLocation.getX(), textLocation.getY() - 15);
-                            OverlayUtil.renderTextLocation(graphics, countdownLocation, countdownText, Color.WHITE);
-                        }
+                        long secondsLeft = timeLeftMillis / 1000;
+                        long minutes = secondsLeft / 60;
+                        long seconds = secondsLeft % 60;
+                        String countdownText = String.format("%d:%02d", minutes, seconds);
+                        Point countdownLocation = new Point(textLocation.getX(), textLocation.getY() - 15);
+                        OverlayUtil.renderTextLocation(graphics, countdownLocation, countdownText, Color.WHITE);
                     }
                 }
-
+            
+            // Only highlight the tunnel if we should
+            if (renderTunnel)
+            {
                 Shape objectClickbox = tunnel.getConvexHull();
                 if (objectClickbox != null)
                 {
@@ -72,14 +77,15 @@ public class GemstoneCrabTimerOverlay extends Overlay
                     graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 50));
                     graphics.fill(objectClickbox);
                     
-                    // Solid yellow outline (not thick)
+                    // Solid yellow outline
                     graphics.setColor(Color.YELLOW);
                     graphics.draw(objectClickbox);
                 }
             }
         }
+        }
         
-        // Pulse the screen as long as the tunnel is highlighted
+        // Pulse the screen as long as the fight is over & player is in area
         if (plugin.shouldPulseScreen())
         {
             long now = System.currentTimeMillis();
