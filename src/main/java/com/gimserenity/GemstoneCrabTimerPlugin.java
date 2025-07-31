@@ -219,7 +219,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	 */
 	public boolean shouldPulseScreen()
 	{
-		return config.pulseScreen() && shouldHighlightTunnel;
+		boolean playerInArea = isPlayerInGemstoneArea();
+		return config.pulseScreen() && shouldHighlightTunnel && playerInArea;
 	}
 	
 	// DPS tracking getter methods
@@ -907,12 +908,12 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			crabCount++;
 			saveCrabCounts();
 			log.debug("Gemstone crab killed! KC: {}", crabCount);
-			String msg = new ChatMessageBuilder().append(Color.RED, String.format("Gemstone Crab Killed! KC: %d", crabCount)).build();
+			String msg = new ChatMessageBuilder().append(Color.RED, String.format("[Gemstone Crab] Gemstone Crab Killed! KC: %d", crabCount)).build();
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
 		}
 		else {
 			log.debug("Gemstone crab kill did not count!");
-			String msg = new ChatMessageBuilder().append(Color.MAGENTA, String.format("Gemstone Crab not fought long enough for kill count.")).build();
+			String msg = new ChatMessageBuilder().append(Color.MAGENTA, String.format("[Gemstone Crab] Gemstone Crab not fought long enough for kill count.")).build();
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
 		}
 	}
