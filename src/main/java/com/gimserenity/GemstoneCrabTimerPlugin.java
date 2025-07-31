@@ -917,7 +917,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		
 		// Notify the user
 		if (client != null) {
-			String msg = new ChatMessageBuilder().append(Color.GREEN, "All Gemstone Crab statistics have been reset.").build();
+			String msg = new ChatMessageBuilder().append(Color.BLUE, "[Gemstone Crab] All Gemstone Crab statistics have been reset.").build();
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
 			log.debug("All Gemstone Crab statistics have been reset");
 		}
