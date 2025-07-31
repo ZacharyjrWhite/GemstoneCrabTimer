@@ -90,9 +90,13 @@ An all-in-one RuneLite plugin for enhancing the Gemstone Crab boss experience.
 
 ## Authors
 
-GIM Serenity, Pino, AhDoozy
+GIM Serenity, Pino
 
-Special thanks to trouttdev for optimising damage/dps calculation.
+## Contributors
+
+Special thanks to: 
+- AhDoozy for estimated time left and screen pulse options
+- trouttdev for optimising damage/dps calculation
 
 ## Support
 
