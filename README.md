@@ -92,6 +92,8 @@ An all-in-one RuneLite plugin for enhancing the Gemstone Crab boss experience.
 
 GIM Serenity, Pino, AhDoozy
 
+Special thanks to trouttdev for optimising damage/dps calculation.
+
 ## Support
 
 For issues, suggestions, or contributions, please open an issue on the GitHub repository.
