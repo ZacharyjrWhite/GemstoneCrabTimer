@@ -17,6 +17,8 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.MenuAction;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
@@ -114,6 +116,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private boolean bossPresent = false;
 
 	private boolean fightEnded = false;
+
+	private boolean AFK = true;
+
 	// Track if we should highlight the tunnel
 	private boolean shouldHighlightTunnel = false;
 	
@@ -221,7 +226,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	public boolean shouldPulseScreen()
 	{
 		boolean playerInArea = isPlayerInGemstoneArea();
-		return config.pulseScreen() && fightEnded && playerInArea;
+		return config.pulseScreen() && fightEnded && playerInArea && AFK;
 	}
 	
 	// DPS tracking getter methods
@@ -474,7 +479,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			bossPresent = true;
 			notificationSent = false;
 			fightEnded = false;
-			
+			AFK = true;
+
 			// Start a new DPS tracking session
 			// This is where we reset stats - when a new boss spawns
 			resetDpsTracking();
@@ -649,6 +655,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					log.debug("Gemstone Crab successfully mined!");
 					miningAttempts++;
 					minedCount++;
+					AFK = false;
 					setLastMiningAttempt();
 				}
 			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_FAIL_MESSAGE)) {
@@ -656,6 +663,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					log.debug("Failed to mine Gemstone Crab!");
 					miningAttempts++;
 					miningFailedCount++;
+					AFK = false;
 					setLastMiningAttempt();
 				}		
 			} else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
@@ -789,19 +797,32 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameObjectDespawned(GameObjectDespawned event)
 	{
-		final GameObject gameObject = event.getGameObject();
+		GameObject gameObject = event.getGameObject();
 		
-		// Remove tunnels from tracking when they despawn
-		if (gameObject.getId() == TUNNEL_OBJECT_ID)
+		// If the despawned object is our tracked tunnel, clear it
+		if (nearestTunnel != null && gameObject.getId() == TUNNEL_OBJECT_ID && gameObject.equals(nearestTunnel))
 		{
-			WorldPoint location = gameObject.getWorldLocation();
-			tunnels.remove(location);
+			nearestTunnel = null;
+		}
+	}
+	
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		// Check if the player clicked on a tunnel
+		if (event.getMenuAction() == MenuAction.GAME_OBJECT_FIRST_OPTION || 
+			event.getMenuAction() == MenuAction.GAME_OBJECT_SECOND_OPTION || 
+			event.getMenuAction() == MenuAction.GAME_OBJECT_THIRD_OPTION || 
+			event.getMenuAction() == MenuAction.GAME_OBJECT_FOURTH_OPTION || 
+			event.getMenuAction() == MenuAction.GAME_OBJECT_FIFTH_OPTION)
+		{
+			int objectId = event.getId();
 			
-			// If this was our highlighted tunnel, clear it
-			if (nearestTunnel != null && nearestTunnel.equals(gameObject))
+			// If the player clicked on a tunnel, mark it as interacted
+			if (objectId == TUNNEL_OBJECT_ID)
 			{
-				nearestTunnel = null;
-				shouldHighlightTunnel = false;
+				log.debug("Player interacted with tunnel");
+				AFK = false;
 			}
 		}
 	}
