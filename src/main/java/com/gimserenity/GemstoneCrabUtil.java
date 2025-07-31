@@ -11,13 +11,13 @@ public class GemstoneCrabUtil {
     private ConfigManager configManager;
 
     public int loadConfigValue(String configGroup, String key){
-        String savedValue = configManager.getConfiguration(configGroup, key);
+        Integer savedValue = configManager.getRSProfileConfiguration(configGroup, key, Integer.class);
         int count = 0;
         if (savedValue != null)
         {
             try
             {
-                count = Integer.parseInt(savedValue);
+                count = savedValue;
             }
             catch (NumberFormatException e)
             {
