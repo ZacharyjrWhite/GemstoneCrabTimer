@@ -126,7 +126,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	String currentFightTracking = "currentFightTracking";
 	
 	@ConfigItem(
-		keyName = "showMainStats",
+		keyName = Constants.SHOW_MAIN_STATS,
 		name = "Show overlay",
 		description = "Display damage, DPS, XP gained, duration and time left in the stats overlay",
 		section = currentFightTracking,
@@ -138,7 +138,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayTotalDamage",
+		keyName = Constants.DISPLAY_TOTAL_DAMAGE,
 		name = "Display total damage",
 		description = "Display total damage dealt in the current fight",
 		section = currentFightTracking,
@@ -150,7 +150,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayDps",
+		keyName = Constants.DISPLAY_DPS,
 		name = "Display DPS",
 		description = "Display damage per second in the current fight",
 		section = currentFightTracking,
@@ -162,7 +162,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayXpGained",
+		keyName = Constants.DISPLAY_XP_GAINED,
 		name = "Display XP gained",
 		description = "Display XP gained in the current fight",
 		section = currentFightTracking,
@@ -174,7 +174,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayDuration",
+		keyName = Constants.DISPLAY_DURATION,
 		name = "Display duration",
 		description = "Display duration of the current fight",
 		section = currentFightTracking,
@@ -186,7 +186,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayTimeLeft",
+		keyName = Constants.DISPLAY_TIME_LEFT,
 		name = "Display time left",
 		description = "Display estimated time left in the current fight",
 		section = currentFightTracking,
@@ -212,7 +212,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	String gemTracking = "gemTracking";
 
     @ConfigItem(
-        keyName = "showOverlay",
+        keyName = Constants.SHOW_STAT_TRACKING,
         name = "Show overlay",
         description = "Show the gemstone crab count overlay",
 		section = statTracking,
@@ -224,7 +224,7 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 
     @ConfigItem(
-        keyName = "displayKillCount",
+        keyName = Constants.DISPLAY_KILL_COUNT,
         name = "Display kill count",
         description = "Display total Gemstone Crab kill count in overlay",
 		section = statTracking,
@@ -236,7 +236,7 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 
 	@ConfigItem(
-        keyName = "displayMiningAttempts",
+        keyName = Constants.DISPLAY_MINING_ATTEMPTS,
         name = "Display total mining attempts",
         description = "Display total Gemstone Crabs attempts at mining in overlay",
 		section = statTracking,
@@ -248,7 +248,7 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 
 	@ConfigItem(
-        keyName = "displayMinedCount",
+        keyName = Constants.DISPLAY_MINED_COUNT,
         name = "Display total successful",
         description = "Display total successful mining attempts at Gemstone Crabs in overlay",
 		section = statTracking,
@@ -260,7 +260,7 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 
 	@ConfigItem(
-        keyName = "displayFailedMiningCount",
+        keyName = Constants.DISPLAY_FAILED_MINING_COUNT,
         name = "Display total failed",
         description = "Display total failed mining attempts at Gemstone Crabs in the overlay",
 		section = statTracking,
@@ -272,7 +272,7 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 
 	@ConfigItem(
-        keyName = "displayGemCount",
+        keyName = Constants.DISPLAY_GEM_COUNT,
         name = "Display total gems mined",
         description = "Display total gems mined at Gemstone Crabs in the overlay",
 		section = statTracking,
@@ -284,7 +284,7 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 	
 	@ConfigItem(
-		keyName = "showGemTracking",
+		keyName = Constants.SHOW_GEM_TRACKING,
 		name = "Show overlay",
 		description = "Display gem tracking section in the overlay",
 		section = gemTracking,
@@ -294,9 +294,8 @@ public interface GemstoneCrabTimerConfig extends Config
 	{
 		return true;
 	}
-	
 	@ConfigItem(
-		keyName = "displayOpals",
+		keyName = Constants.DISPLAY_OPALS,
 		name = "Display opals",
 		description = "Display opal count and percentage in the overlay",
 		section = gemTracking,
@@ -308,7 +307,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayJades",
+		keyName = Constants.DISPLAY_JADES,
 		name = "Display jades",
 		description = "Display jade count and percentage in the overlay",
 		section = gemTracking,
@@ -320,7 +319,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayRedTopaz",
+		keyName = Constants.DISPLAY_RED_TOPAZ,
 		name = "Display red topaz",
 		description = "Display red topaz count and percentage in the overlay",
 		section = gemTracking,
@@ -332,7 +331,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displaySapphires",
+		keyName = Constants.DISPLAY_SAPPHIRES,
 		name = "Display sapphires",
 		description = "Display sapphire count and percentage in the overlay",
 		section = gemTracking,
@@ -344,7 +343,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayEmeralds",
+		keyName = Constants.DISPLAY_EMERALDS,
 		name = "Display emeralds",
 		description = "Display emerald count and percentage in the overlay",
 		section = gemTracking,
@@ -356,7 +355,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayRubies",
+		keyName = Constants.DISPLAY_RUBIES,
 		name = "Display rubies",
 		description = "Display ruby count and percentage in the overlay",
 		section = gemTracking,
@@ -368,7 +367,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayDiamonds",
+		keyName = Constants.DISPLAY_DIAMONDS,
 		name = "Display diamonds",
 		description = "Display diamond count and percentage in the overlay",
 		section = gemTracking,
@@ -380,7 +379,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
-		keyName = "displayDragonstones",
+		keyName = Constants.DISPLAY_DRAGONSTONES,
 		name = "Display dragonstones",
 		description = "Display dragonstone count and percentage in the overlay",
 		section = gemTracking,

@@ -34,21 +34,28 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
     
     @Inject
     private ItemManager itemManager;
+
+    // Uncomment if you want to use the timing helper for testing render times
+    // @Inject
+    // private GemstoneCrabFunctionTimingHelper timing;
+
+    private GemstoneCrabConfigStore configStore;
     
     @Inject
     private GemstoneCrabTimerDpsOverlay(GemstoneCrabTimerPlugin plugin)
     {
         this.plugin = plugin;
+        this.configStore = plugin.getConfigStore();
         setPosition(OverlayPosition.TOP_LEFT);
         setLayer(OverlayLayer.ABOVE_WIDGETS);
     }
     
-    @Inject
-    private GemstoneCrabTimerConfig config;
-    
     @Override
     public Dimension render(Graphics2D graphics)
     {
+        // Used for Testing Render Timing
+        // var startTime = System.nanoTime();
+
         // Don't render if player is not in a Gemstone Crab area
         if (!plugin.isPlayerInGemstoneArea())
         {
@@ -63,10 +70,9 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
         // Set up the panel
         panelComponent.getChildren().clear();
         panelComponent.setBackgroundColor(new Color(18, 18, 18, 180)); // Dark background
-        // Already set preferred size above, no need to set it again
         
         // Show main stats section if enabled
-        if (config.showMainStats())
+        if (configStore.getValue(Constants.SHOW_MAIN_STATS))
         {
             // Add title
             panelComponent.getChildren().add(TitleComponent.builder()
@@ -75,7 +81,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                 .build());
                 
             // Add total damage if enabled
-            if (config.displayTotalDamage()) {
+            if (configStore.getValue(Constants.DISPLAY_TOTAL_DAMAGE)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Total Damage:")
                     .right(String.format("%,d", plugin.getTotalDamage()))
@@ -83,7 +89,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             }
             
             // Add DPS if enabled
-            if (config.displayDps()) {
+            if (configStore.getValue(Constants.DISPLAY_DPS)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("DPS:")
                     .right(DPS_FORMAT.format(plugin.getCurrentDps()))
@@ -91,7 +97,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             }
             
             // Add XP gained if enabled
-            if (config.displayXpGained()) {
+            if (configStore.getValue(Constants.DISPLAY_XP_GAINED)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("XP Gained:")
                     .right(String.format("%,d", plugin.getTotalXpGained()))
@@ -99,7 +105,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             }
             
             // Add fight duration if enabled
-            if (config.displayDuration()) {
+            if (configStore.getValue(Constants.DISPLAY_DURATION)) {
                 long seconds = plugin.getFightDuration() / 1000;
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Duration:")
@@ -108,7 +114,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             }
             
             // Add estimated time left if enabled
-            if (config.displayTimeLeft() && plugin.isFightInProgress()) {
+            if (configStore.getValue(Constants.DISPLAY_TIME_LEFT) && plugin.isFightInProgress()) {
                 long timeLeftMillis = plugin.getEstimatedTimeRemainingMillis();
                 if (timeLeftMillis > 0) {
                     long secondsLeft = timeLeftMillis / 1000;
@@ -120,20 +126,20 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             }
         }
 
-        if (config.showOverlay()) {
+        if (configStore.getValue(Constants.SHOW_STAT_TRACKING)) {
             panelComponent.getChildren().add(TitleComponent.builder()
                 .text("Kill Stats")
                 .color(Color.GREEN)
                 .build());
 
-            if (config.displayKillCount()) {
+            if (configStore.getValue(Constants.DISPLAY_KILL_COUNT)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Crabs Killed:")
                     .right(String.valueOf(plugin.getCrabCount()))
                     .build());
             }
 
-            if (config.displayMiningAttempts()) {
+            if (configStore.getValue(Constants.DISPLAY_MINING_ATTEMPTS)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Mining Attempts:")
                     .right(String.valueOf(plugin.getMiningAttemptsCount()))
@@ -141,21 +147,21 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             }
 
 
-            if (config.displayMinedCount()) {
+            if (configStore.getValue(Constants.DISPLAY_MINED_COUNT)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Successful:")
                     .right(String.valueOf(plugin.getMinedCount()))
                     .build());
             }
 
-            if (config.displayFailedMiningCount()) {
+            if (configStore.getValue(Constants.DISPLAY_FAILED_MINING_COUNT)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Failed:")
                     .right(String.valueOf(plugin.getMiningFailedCount()))
                     .build());
             }
 
-            if (config.displayGemCount()) {
+            if (configStore.getValue(Constants.DISPLAY_GEM_COUNT)) {
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Gems Mined:")
                     .right(String.valueOf(plugin.getGemsCount()))
@@ -164,7 +170,7 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
         }
         
         // Show gem tracking section if enabled
-        if (config.showGemTracking()) {
+        if (configStore.getValue(Constants.SHOW_GEM_TRACKING)) {
             
             panelComponent.getChildren().add(TitleComponent.builder()
                 .text("Gem Tracking")
@@ -180,22 +186,22 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             firstRowPanel.setGap(new Point(4, 0));
             
             // First row gems (opal, jade, topaz, sapphire)
-            if (config.displayOpals()) {
+            if (configStore.getValue(Constants.DISPLAY_OPALS)) {
                 firstRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_OPAL_ITEM_ID, plugin.getOpalsCount(), true)));
             }
             
-            if (config.displayJades()) {
+            if (configStore.getValue(Constants.DISPLAY_JADES)) {
                 firstRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_JADE_ITEM_ID, plugin.getJadesCount(), true)));
             }
             
-            if (config.displayRedTopaz()) {
+            if (configStore.getValue(Constants.DISPLAY_RED_TOPAZ)) {
                 firstRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_RED_TOPAZ_ITEM_ID, plugin.getRedTopazCount(), true)));
             }
             
-            if (config.displaySapphires()) {
+            if (configStore.getValue(Constants.DISPLAY_SAPPHIRES)) {
                 firstRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_SAPPHIRE_ITEM_ID, plugin.getSapphiresCount(), true)));
             }
@@ -205,8 +211,10 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                 panelComponent.getChildren().add(firstRowPanel);
                 
                 // Add a small spacer before the second row if both rows will be shown
-                if (config.displayEmeralds() || config.displayRubies() || 
-                    config.displayDiamonds() || config.displayDragonstones()) {
+                if (configStore.getValue(Constants.DISPLAY_DIAMONDS) || 
+                    configStore.getValue(Constants.DISPLAY_RUBIES) || 
+                    configStore.getValue(Constants.DISPLAY_DIAMONDS) || 
+                    configStore.getValue(Constants.DISPLAY_DRAGONSTONES)) {
                     panelComponent.getChildren().add(LineComponent.builder().build());
                 }
             }
@@ -220,22 +228,22 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             secondRowPanel.setGap(new Point(4, 0));
             
             // Second row gems (emerald, ruby, diamond, dragonstone) - always show all gems
-            if (config.displayEmeralds()) {
+            if (configStore.getValue(Constants.DISPLAY_EMERALDS)) {
                 secondRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_EMERALD_ITEM_ID, plugin.getEmeraldsCount(), true)));
             }
             
-            if (config.displayRubies()) {
+            if (configStore.getValue(Constants.DISPLAY_RUBIES) ) {
                 secondRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_RUBY_ITEM_ID, plugin.getRubiesCount(), true)));
             }
             
-            if (config.displayDiamonds()) {
+            if (configStore.getValue(Constants.DISPLAY_DIAMONDS)) {
                 secondRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_DIAMOND_ITEM_ID, plugin.getDiamondsCount(), true)));
             }
             
-            if (config.displayDragonstones()) {
+            if (configStore.getValue(Constants.DISPLAY_DRAGONSTONES)) {
                 secondRowPanel.getChildren().add(new ImageComponent(
                     itemManager.getImage(UNCUT_DRAGONSTONE_ITEM_ID, plugin.getDragonstonesCount(), true)));
             }
@@ -254,10 +262,11 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
             // Keep main panel in vertical orientation for the rest of the overlay
             panelComponent.setOrientation(ComponentOrientation.VERTICAL);
         }
-        
 
-
-        
+        // Used for Testing Render Timing
+        // var endTime = System.nanoTime();
+        // long totalTimeNanos = endTime - startTime;
+        // timing.addRender(totalTimeNanos);
         return panelComponent.render(graphics);
     }
 }

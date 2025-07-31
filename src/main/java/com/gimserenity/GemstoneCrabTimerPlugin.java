@@ -24,9 +24,13 @@ import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
+import net.runelite.client.account.AccountSession;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.SessionOpen;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -96,6 +100,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 
 	@Inject
 	private GemstoneCrabTimerConfig config;
+
+	@Inject
+	private GemstoneCrabConfigStore configStore;
 	
 	@Inject
 	private Notifier notifier;
@@ -141,17 +148,10 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private boolean fightInProgress = false;
 	
 	// XP tracking for DPS calculation
-	private int lastAttackXp = 0;
-	private int lastStrengthXp = 0;
-	private int lastDefenceXp = 0;
-	private int lastRangedXp = 0;
-	private int lastMagicXp = 0;
-	private int lastHitpointsXp = 0; // Track Hitpoints XP for display only
 	private int totalXpGained = 0; // Total XP gained during the fight
 	private int pendingCombatXp = 0;
 	// Tracks last XP value per skill
 	private final Map<Skill, Integer> lastXp = new EnumMap<>(Skill.class);
-	private static final long XP_GAIN_TIMEOUT = 1000; // 1 second timeout for XP gains
 
 	// Kill tracking variables
 	private int crabCount;
@@ -179,6 +179,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	@Inject
 	private GemstoneCrabTimerDpsOverlay dpsOverlay;
+
+	@Inject
+    private ClientThread clientThread;
 	
 	@Override
 	protected void startUp() throws Exception
@@ -189,9 +192,13 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		nearestTunnel = null;
 		tunnels.clear();
 		resetDpsTracking();
-		loadSavedConfiguration();
+		configStore.load(config);
 		overlayManager.add(overlay);
 		overlayManager.add(dpsOverlay);
+	}
+
+	public GemstoneCrabConfigStore getConfigStore() {
+		return configStore;
 	}
 
 	@Override
@@ -376,27 +383,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		totalXpGained = 0; // Reset total XP gained
 		pendingCombatXp = 0;
 		lastXp.clear();
-		
-		// Initialize XP tracking with current XP values
-		if (client != null)
-		{
-			lastAttackXp = client.getSkillExperience(Skill.ATTACK);
-			lastStrengthXp = client.getSkillExperience(Skill.STRENGTH);
-			lastDefenceXp = client.getSkillExperience(Skill.DEFENCE);
-			lastRangedXp = client.getSkillExperience(Skill.RANGED);
-			lastMagicXp = client.getSkillExperience(Skill.MAGIC);
-			lastHitpointsXp = client.getSkillExperience(Skill.HITPOINTS);
-		}
-		else
-		{
-			// Fallback if client is not available
-			lastAttackXp = 0;
-			lastStrengthXp = 0;
-			lastDefenceXp = 0;
-			lastRangedXp = 0;
-			lastMagicXp = 0;
-			lastHitpointsXp = 0;
-		}
 	}
 	
 	/*
@@ -621,6 +607,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		{
 			// Reset notification state when logging in
 			notificationSent = false;
+            clientThread.invoke(this::loadSavedConfiguration);
 		}
 		else if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
@@ -827,6 +814,17 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		}
 	}
 
+	/*
+	 * Updates configuration store if value is updated
+	 */
+	@Subscribe
+	public void onConfigChanged​(ConfigChanged event) {
+		if (event.getGroup().equalsIgnoreCase(CONFIG_GROUP)) {
+			log.debug("event in group. Kay: {}", event.getKey());
+			configStore.updateValue(event.getKey(), event.getNewValue());
+		}
+	}
+
 	// Find the nearest tunnel to the player
 	private void findNearestTunnel()
 	{
@@ -859,21 +857,23 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	 * Save all the kill and mining stats
 	 */
 	private void saveCrabCounts() {
-        configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_COUNT, String.valueOf(crabCount));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_MINING_ATTEMPTS, String.valueOf(miningAttempts));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_MINED, String.valueOf(minedCount));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_FAILED, String.valueOf(miningFailedCount));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_GEMS_MINED, String.valueOf(gemsMined));
+		log.debug("saving crab counts {}", crabCount);
+		// Save counts
+        configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_COUNT, crabCount);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_MINING_ATTEMPTS, miningAttempts);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_MINED, minedCount);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_FAILED, miningFailedCount);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_GEMS_MINED, gemsMined);
 		
 		// Save gem tracking
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_OPALS, String.valueOf(opals));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_JADES, String.valueOf(jades));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_RED_TOPAZ, String.valueOf(redTopaz));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_SAPPHIRES, String.valueOf(sapphires));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_EMERALDS, String.valueOf(emeralds));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_RUBIES, String.valueOf(rubies));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_DIAMONDS, String.valueOf(diamonds));
-		configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_DRAGONSTONES, String.valueOf(dragonstones));
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_OPALS, opals);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_JADES, jades);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_RED_TOPAZ, redTopaz);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_SAPPHIRES, sapphires);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_EMERALDS, emeralds);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_RUBIES, rubies);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_DIAMONDS, diamonds);
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_DRAGONSTONES, dragonstones);
 	}
 	
 	/*
