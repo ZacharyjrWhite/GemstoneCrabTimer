@@ -1,10 +1,12 @@
 package com.gimserenity;
 
 import java.awt.Color;
+
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Notification;
 import net.runelite.client.config.Range;
 
 @ConfigGroup("gemstonecrab")
@@ -16,18 +18,19 @@ public interface GemstoneCrabTimerConfig extends Config
 		position = 0
 	)
 	String notificationList = "notificationList";
-	
+
 	@ConfigItem(
-		keyName = "enableNotifications",
-		name = "Enable Notifications",
-		description = "Enable desktop notifications when Gemstone Crab reaches HP threshold",
-		section = notificationList
+		keyName = "hpThresholdNotification",
+		name = "HP Threshold Notification",
+		description = "Show a notification when the Gemstone Crab reaches the HP threshold",
+		section = notificationList,
+		position = 0
 	)
-	default boolean enableNotifications()
+	default Notification hpThresholdNotification()
 	{
-		return true;
+		return Notification.ON;
 	}
-	
+
 	@Range(
 		min = 1,
 		max = 99
@@ -36,7 +39,8 @@ public interface GemstoneCrabTimerConfig extends Config
 		keyName = "hpThreshold",
 		name = "HP Threshold %",
 		description = "Send notification when Gemstone Crab HP reaches this percentage",
-		section = notificationList
+		section = notificationList,
+		position = 1
 	)
 	default int hpThreshold()
 	{
@@ -47,18 +51,28 @@ public interface GemstoneCrabTimerConfig extends Config
 		keyName = "notificationMessage",
 		name = "Notification Message",
 		description = "Message to show in the notification",
-		section = notificationList
+		section = notificationList,
+		position = 2
 	)
 	default String notificationMessage()
 	{
 		return "Gemstone Crab HP threshold reached!";
 	}
 
+	@ConfigSection(
+		name = "Pulse Screen",
+		description = "Pulse Screen when boss is dead",
+		position = 1
+	)
+	String pulseScreenList = "pulseScreenList";
+
+
 	@ConfigItem(
 		keyName = "pulseScreen",
 		name = "Pulse Screen",
-		description = "Pulse the screen overlay when the tunnel is highlighted",
-		section = notificationList
+		description = "Pulse the screen when boss is dead",
+		section = pulseScreenList,
+		position = 0
 	)
 	default boolean pulseScreen()
 	{
@@ -69,7 +83,8 @@ public interface GemstoneCrabTimerConfig extends Config
 		keyName = "pulseColor",
 		name = "Pulse Color",
 		description = "Color of the screen pulse",
-		section = notificationList
+		section = pulseScreenList,
+		position = 1
 	)
 	default Color pulseColor()
 	{
@@ -80,7 +95,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	@ConfigSection(
 		name = "Highlights",
 		description = "Highlight settings",
-		position = 1
+		position = 2
 	)
 	String highlights = "highlights";
 	
@@ -121,7 +136,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	@ConfigSection(
 		name = "Current Fight Tracking",
 		description = "Current Fight Information",
-		position = 2
+		position = 3
 	)
 	String currentFightTracking = "currentFightTracking";
 	
@@ -200,16 +215,9 @@ public interface GemstoneCrabTimerConfig extends Config
 	@ConfigSection(
 		name = "Stat Tracking",
 		description = "Stat Tracking",
-		position = 3
-	)
-	String statTracking = "statTracking";
-	
-	@ConfigSection(
-		name = "Gem Tracking",
-		description = "Gem Tracking",
 		position = 4
 	)
-	String gemTracking = "gemTracking";
+	String statTracking = "statTracking";
 
     @ConfigItem(
         keyName = Constants.SHOW_STAT_TRACKING,
@@ -283,6 +291,13 @@ public interface GemstoneCrabTimerConfig extends Config
         return false;
     }
 	
+	@ConfigSection(
+		name = "Gem Tracking",
+		description = "Gem Tracking",
+		position = 5
+	)
+	String gemTracking = "gemTracking";
+
 	@ConfigItem(
 		keyName = Constants.SHOW_GEM_TRACKING,
 		name = "Show overlay",
