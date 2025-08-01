@@ -24,13 +24,11 @@ import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
-import net.runelite.client.account.AccountSession;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.events.SessionOpen;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -565,7 +563,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		}
 		
 		// Check boss HP for notification
-		if (bossPresent && config.enableNotifications() && !notificationSent)
+		if (bossPresent && config.hpThresholdNotification().isEnabled() && !notificationSent)
 		{
 			checkBossHpAndNotify();
 		}
