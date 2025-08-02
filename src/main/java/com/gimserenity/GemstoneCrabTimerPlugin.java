@@ -484,7 +484,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		{
 			log.debug("Gemstone Crab boss despawned");
 			bossPresent = false;
-			notificationSent = false;
 			fightEnded = true;
 			
 			// Finalize DPS tracking but don't reset stats
@@ -555,13 +554,12 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			{
 				// Boss is present but we weren't tracking it (player just entered area)
 				bossPresent = true;
-				notificationSent = false;
 				
 				// Only track if there's an actual NPC (not just HP bar)
 				log.debug("Re-entered area with boss HP bar visible");
 			}
 		}
-		
+
 		// Check boss HP for notification
 		if (bossPresent && config.hpThresholdNotification().isEnabled() && !notificationSent)
 		{
@@ -760,8 +758,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		// Check if HP is at or below the threshold
 		if (hpPercent <= config.hpThreshold() && !notificationSent)
 		{
-			notifier.notify(config.notificationMessage() + " (" + hpPercent + "% HP)");
 			notificationSent = true;
+			notifier.notify(config.notificationMessage() + " (" + hpPercent + "% HP)");
 			log.debug("Sent notification for Gemstone Crab at {}% HP", hpPercent);
 		}
 	}
@@ -900,8 +898,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		
 		// Notify the user
 		if (client != null) {
-			String msg = new ChatMessageBuilder().append(Color.BLUE, "[Gemstone Crab] All Gemstone Crab statistics have been reset.").build();
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
+			sendChatMessage(Color.BLUE, "All Gemstone Crab statistics have been reset.", true);
 			log.debug("All Gemstone Crab statistics have been reset");
 		}
 	}
@@ -934,15 +931,28 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		if (isValidKill()) {
 			crabCount++;
 			saveCrabCounts();
+			sendChatMessage(Color.RED, String.format("Gemstone Crab Killed! KC: %d", crabCount), config.displayKillMessage());
 			log.debug("Gemstone crab killed! KC: {}", crabCount);
-			String msg = new ChatMessageBuilder().append(Color.RED, String.format("[Gemstone Crab] Gemstone Crab Killed! KC: %d", crabCount)).build();
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
 		}
 		else {
+			sendChatMessage(Color.MAGENTA, "Gemstone Crab not fought long enough for kill count.", config.displayKillMessage());
 			log.debug("Gemstone crab kill did not count!");
-			String msg = new ChatMessageBuilder().append(Color.MAGENTA, String.format("[Gemstone Crab] Gemstone Crab not fought long enough for kill count.")).build();
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", msg, "");
 		}
+		
+	}
+
+	/*
+	 * Send a chat message with the specified color and message
+	 * Only sends if the feature is enabled in the config
+	 */
+	private void sendChatMessage(Color color, String message, boolean isEnabled) {
+		if (!isEnabled) {
+			return;
+		}
+		String formattedMessage = new ChatMessageBuilder()
+			.append(color, String.format(message, "[Gemstone Crab] %s", message))
+			.build();
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", formattedMessage, "");
 	}
 
 	@Provides
