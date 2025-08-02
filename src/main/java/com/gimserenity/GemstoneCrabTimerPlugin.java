@@ -459,7 +459,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		
 		if (npc.getId() == GEMSTONE_CRAB_ID)
 		{
-			log.info("Gemstone Crab boss spawned");
+			log.debug("Gemstone Crab boss spawned");
 			bossPresent = true;
 			notificationSent = false;
 			fightEnded = false;
