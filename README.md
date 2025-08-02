@@ -74,6 +74,7 @@ An all-in-one RuneLite plugin for enhancing the Gemstone Crab boss experience.
 ### Stat Tracking
 - **Show overlay**: Toggle the kill stats section on/off
 - **Display kill count**: Toggle display of total kills
+- **Display Kill message**: Toggle display of the kill count in a chat message
 - **Display total mining attempts**: Toggle display of mining attempts
 - **Display total successful**: Toggle display of successful mining attempts
 - **Display total failed**: Toggle display of failed mining attempts
@@ -103,3 +104,20 @@ Special thanks to:
 ## Support
 
 For issues, suggestions, or contributions, please open an issue on the GitHub repository.
+
+## Changelog
+
+### V1.1.1
+- Fix issue with multiple notificaitons
+- Add configuration option to show or hide the kill count chat message
+
+### V1.1.0
+- Tracking
+    - Gem stats
+    - Kill stats 
+    - Tunnel highlights
+- Configuration options
+- Pulse Screen
+
+### V1.0.0
+Initial Release

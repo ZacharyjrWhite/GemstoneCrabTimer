@@ -76,7 +76,7 @@ public interface GemstoneCrabTimerConfig extends Config
 	)
 	default boolean pulseScreen()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
@@ -244,11 +244,23 @@ public interface GemstoneCrabTimerConfig extends Config
     }
 
 	@ConfigItem(
+        keyName = "killMessage",
+        name = "Display kill message",
+        description = "Enable to recieve a kill count message in chat when boss is killed",
+		section = statTracking,
+		position = 2
+    )
+    default boolean displayKillMessage()
+    {
+        return true;
+    }
+
+	@ConfigItem(
         keyName = Constants.DISPLAY_MINING_ATTEMPTS,
         name = "Display total mining attempts",
         description = "Display total Gemstone Crabs attempts at mining in overlay",
 		section = statTracking,
-		position = 2
+		position = 3
     )
     default boolean displayMiningAttempts()
     {
@@ -260,7 +272,7 @@ public interface GemstoneCrabTimerConfig extends Config
         name = "Display total successful",
         description = "Display total successful mining attempts at Gemstone Crabs in overlay",
 		section = statTracking,
-		position = 3
+		position = 4
     )
     default boolean displayMinedCount()
     {
@@ -272,7 +284,7 @@ public interface GemstoneCrabTimerConfig extends Config
         name = "Display total failed",
         description = "Display total failed mining attempts at Gemstone Crabs in the overlay",
 		section = statTracking,
-		position = 4
+		position = 5
     )
     default boolean displayFailedMiningCount()
     {
@@ -284,7 +296,7 @@ public interface GemstoneCrabTimerConfig extends Config
         name = "Display total gems mined",
         description = "Display total gems mined at Gemstone Crabs in the overlay",
 		section = statTracking,
-		position = 5
+		position = 6
     )
     default boolean displayGemCount()
     {
