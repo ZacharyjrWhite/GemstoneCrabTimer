@@ -759,7 +759,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		if (hpPercent <= config.hpThreshold() && !notificationSent)
 		{
 			notificationSent = true;
-			notifier.notify(config.notificationMessage() + " (" + hpPercent + "% HP)");
+			notifier.notify(config.hpThresholdNotification(), config.notificationMessage() + " (" + hpPercent + "% HP)");
 			log.debug("Sent notification for Gemstone Crab at {}% HP", hpPercent);
 		}
 	}
