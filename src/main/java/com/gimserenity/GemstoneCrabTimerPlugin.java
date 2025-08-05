@@ -12,7 +12,9 @@ import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.NPC;
 import net.runelite.api.Skill;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.IndexedObjectSet;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
@@ -260,17 +262,39 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			return 0;
 		}
 		
-		Widget bossHpBar = client.getWidget(BOSS_HP_BAR_WIDGET_ID);
-		if (bossHpBar == null || bossHpBar.isHidden() || bossHpBar.getText() == null)
+		// Get the boss NPC
+		NPC boss = null;
+		WorldView view = client.getWorldView(-1);
+		for (NPC npc : view.npcs())
+		{
+			if (npc != null && npc.getId() == GEMSTONE_CRAB_ID)
+			{
+				boss = npc;
+				break;
+			}
+		}
+		
+		if (boss == null)
 		{
 			return 0;
 		}
 		
 		try
 		{
-			// Get current HP percentage from widget
-			int currentHpPercent = Integer.parseInt(bossHpBar.getText().replace("%", "").trim());
-			currentHpPercent = Math.max(1, Math.min(currentHpPercent, 100));
+			// Get health ratio and scale from the NPC
+			int healthRatio = boss.getHealthRatio();
+			int healthScale = boss.getHealthScale();
+			
+			// If either value is -1, the health info is not available
+			if (healthRatio == -1 || healthScale == -1)
+			{
+				log.debug("Health ratio or scale not available: {} / {}", healthRatio, healthScale);
+				return 0;
+			}
+			
+			// Calculate current HP percentage
+			int currentHpPercent = (int) (((double) healthRatio / (double) healthScale) * 100);
+			currentHpPercent = Math.max(0, Math.min(currentHpPercent, 100));
 			
 			// Update our tracking variables when HP changes
 			if (currentHpPercent != lastHpPercent)
@@ -288,9 +312,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			double timeLeftSeconds = (interpolatedHpPercent / 100.0) * 600;
 			return (long) (timeLeftSeconds * 1000);
 		}
-		catch (NumberFormatException e)
+		catch (Exception e)
 		{
-			log.debug("Failed to parse HP percentage for countdown");
+			log.debug("Failed to calculate time remaining: {}", e.getMessage());
 			return 0;
 		}
 	}
@@ -454,7 +478,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			notificationSent = false;
 			fightEnded = false;
 			AFK = true;
-
+			
 			// Start a new DPS tracking session
 			// This is where we reset stats - when a new boss spawns
 			resetDpsTracking();
@@ -717,40 +741,49 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	private void checkBossHpAndNotify()
 	{
-		// Get the boss HP widget
-		Widget bossHpBar = client.getWidget(BOSS_HP_BAR_WIDGET_ID);
+		// Get the boss NPC
+		NPC boss = null;
+		WorldView view = client.getWorldView(-1);
+		for (NPC npc : view.npcs())
+		{
+			if (npc != null && npc.getId() == GEMSTONE_CRAB_ID)
+			{
+				boss = npc;
+				break;
+			}
+		}
 		
-		if (bossHpBar == null || bossHpBar.isHidden())
+		if (boss == null)
 		{
 			return;
 		}
 		
-		// Get HP percentage directly from the widget's text value
-		String text = bossHpBar.getText();
-		if (text == null || text.isEmpty())
-		{
-			return;
-		}
-		
-		// Parse the percentage value (e.g., "50%" -> 50)
-		int hpPercent;
 		try
 		{
-			// Remove the % sign and parse the number
-			hpPercent = Integer.parseInt(text.replace("%", "").trim());
+			// Get health ratio and scale from the NPC
+			int healthRatio = boss.getHealthRatio();
+			int healthScale = boss.getHealthScale();
+			
+			// If either value is -1, the health info is not available
+			if (healthRatio == -1 || healthScale == -1)
+			{
+				return;
+			}
+			
+			// Calculate current HP percentage (0-100)
+			int hpPercent = (int) (((double) healthRatio / (double) healthScale) * 100);
+			
+			// Check if HP is at or below the threshold
+			if (hpPercent <= config.hpThreshold() && !notificationSent)
+			{
+				notificationSent = true;
+				notifier.notify(config.hpThresholdNotification(), config.notificationMessage() + " (" + hpPercent + "% HP)");
+				log.debug("Sent notification for Gemstone Crab at {}% HP", hpPercent);
+			}
 		}
-		catch (NumberFormatException e)
+		catch (Exception e)
 		{
-			log.debug("Failed to parse HP percentage from text: {}", text);
-			return;
-		}
-		
-		// Check if HP is at or below the threshold
-		if (hpPercent <= config.hpThreshold() && !notificationSent)
-		{
-			notificationSent = true;
-			notifier.notify(config.hpThresholdNotification(), config.notificationMessage() + " (" + hpPercent + "% HP)");
-			log.debug("Sent notification for Gemstone Crab at {}% HP", hpPercent);
+			log.debug("Failed to calculate HP percentage for notification: {}", e.getMessage());
 		}
 	}
 
