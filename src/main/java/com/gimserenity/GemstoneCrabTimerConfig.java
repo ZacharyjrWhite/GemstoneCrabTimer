@@ -32,8 +32,8 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 
 	@Range(
-		min = 1,
-		max = 99
+		min = 0,
+		max = 100
 	)
 	@ConfigItem(
 		keyName = "hpThreshold",

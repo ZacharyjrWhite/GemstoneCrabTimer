@@ -110,7 +110,8 @@ For issues, suggestions, or contributions, please open an issue on the GitHub re
 ### V1.1.2
 - Messages now show [Gemstone Crab] in front of them
 - Fix issues with threshold notification settings
-- Death notificaiton combined or replaced with builtin notificaiton 
+- Death notificaiton (pulse) replaced with builtin notificaiton at HP threshold (flash)
+- Changed minimum threshold to 0% instead of 1%
 
 ### V1.1.1
 - Fix issue with multiple notificaitons
