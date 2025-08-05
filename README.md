@@ -52,12 +52,9 @@ An all-in-one RuneLite plugin for enhancing the Gemstone Crab boss experience.
 
 ### Notifications
 - **HP Threshold Notification**: Update Notification settings
-- **HP Threshold**: Set the boss HP percentage at which to receive a notification (1-99%)
+- **HP Threshold**: Set the boss HP percentage at which to receive a notification (0-100%)
 - **Notification Message**: Customize the message displayed in the notification
-
-### Pulse Screen
-- **Pulse Screen**: Toggle the screen pulse effect when the boss dies
-- **Pulse Color**: Choose the color for the screen pulse effect
+- **Notification Settings**: You can customize the notification settings to allow flashes & toggle if notifications require RuneLite to be focused or not
 
 ### Highlights
 - **Highlight Tunnel**: Toggle tunnel highlighting on/off
