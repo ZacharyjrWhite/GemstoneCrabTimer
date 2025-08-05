@@ -771,10 +771,10 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 			
 			// Calculate current HP percentage (0-100)
-			int hpPercent = (int) (((double) healthRatio / (double) healthScale) * 100);
+			double hpPercent = (((double) healthRatio / (double) healthScale) * 100);
 			
 			// Check if HP is at or below the threshold
-			if (hpPercent <= (config.hpThreshold() - 0.5) && !notificationSent)
+			if (hpPercent <= (config.hpThreshold()) && !notificationSent)
 			{
 				notificationSent = true;
 				notifier.notify(config.hpThresholdNotification(), config.notificationMessage() + " (" + hpPercent + "% HP)");
