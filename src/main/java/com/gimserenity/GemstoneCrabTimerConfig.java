@@ -58,39 +58,6 @@ public interface GemstoneCrabTimerConfig extends Config
 	{
 		return "Gemstone Crab HP threshold reached!";
 	}
-
-	@ConfigSection(
-		name = "Pulse Screen",
-		description = "Pulse Screen when boss is dead",
-		position = 1
-	)
-	String pulseScreenList = "pulseScreenList";
-
-
-	@ConfigItem(
-		keyName = "pulseScreen",
-		name = "Pulse Screen",
-		description = "Pulse the screen when boss is dead",
-		section = pulseScreenList,
-		position = 0
-	)
-	default boolean pulseScreen()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "pulseColor",
-		name = "Pulse Color",
-		description = "Color of the screen pulse",
-		section = pulseScreenList,
-		position = 1
-	)
-	default Color pulseColor()
-	{
-		return new Color(255, 0, 0, 128); // Semi-transparent red
-	}
-
 		
 	@ConfigSection(
 		name = "Highlights",

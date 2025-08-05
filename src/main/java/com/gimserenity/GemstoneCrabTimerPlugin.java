@@ -224,16 +224,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		return shouldHighlightTunnel;
 	}
 	
-	/**
-	 * Checks if the screen pulse effect should be active
-	 * @return true if the pulse effect should be shown
-	 */
-	public boolean shouldPulseScreen()
-	{
-		boolean playerInArea = isPlayerInGemstoneArea();
-		return config.pulseScreen() && fightEnded && playerInArea && AFK;
-	}
-	
 	// DPS tracking getter methods
 	public int getTotalDamage()
 	{

@@ -84,21 +84,6 @@ public class GemstoneCrabTimerOverlay extends Overlay
             }
         }
         }
-        
-        // Pulse the screen as long as the fight is over & player is in area
-        if (plugin.shouldPulseScreen())
-        {
-            long now = System.currentTimeMillis();
-            float currentPhase = (float)(Math.sin(now / 1000.0 * Math.PI) + 1) / 2; // cycle every 2s
-            int alpha = (int)(50 + currentPhase * 100); // safe range: 50–150
-            
-            Color pulseColor = config.pulseColor();
-            Graphics2D g2d = (Graphics2D) graphics.create();
-            g2d.setComposite(AlphaComposite.SrcOver.derive(alpha / 255f));
-            g2d.setColor(pulseColor);
-            g2d.fillRect(0, 0, client.getCanvas().getWidth(), client.getCanvas().getHeight());
-            g2d.dispose();
-        }
 
         return null;
     }
