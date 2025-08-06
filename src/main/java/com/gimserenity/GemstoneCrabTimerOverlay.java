@@ -3,15 +3,15 @@ package com.gimserenity;
 
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
+import net.runelite.api.NPC;
 import net.runelite.api.Point;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-// Using OverlayUtil instead of deprecated OverlayPriority
 import net.runelite.client.ui.overlay.OverlayUtil;
 
 import javax.inject.Inject;
-import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -38,6 +38,40 @@ public class GemstoneCrabTimerOverlay extends Overlay
     {
         boolean renderTunnel = config.highlightTunnel() && plugin.getNearestTunnel() != null && plugin.shouldHighlightTunnel();
         boolean showTimeLeft = config.tunnelTimeLeft() && plugin.getNearestTunnel() != null && plugin.getEstimatedTimeRemainingMillis() > 0;
+        boolean renderShell = config.highlightShell() && plugin.getCrabShell() != null && plugin.shouldHighlightShell();
+        
+        // Render the crab shell if needed
+        if (renderShell)
+        {
+            NPC shell = plugin.getCrabShell();
+            if (shell != null)
+            {
+                // Use green color if top 16 damager, red otherwise
+                Color shellColor = plugin.isTop16Damager() ? Color.GREEN : Color.RED;
+                
+                String shellText = plugin.isTop16Damager() ? "Can Mine" : "Can't Mine";
+                
+                if (shell.getCanvasTextLocation(graphics, shellText, 0) != null)
+                {
+                    Point textLocation = shell.getCanvasTextLocation(graphics, shellText, 0);
+                    if (textLocation != null)
+                    {
+                        OverlayUtil.renderTextLocation(graphics, textLocation, shellText, shellColor);
+                    }
+                }
+                
+                Shape objectClickbox = shell.getConvexHull();
+                if (objectClickbox != null)
+                {
+                    graphics.setColor(new Color(shellColor.getRed(), shellColor.getGreen(), shellColor.getBlue(), 50));
+                    graphics.fill(objectClickbox);
+                    
+                    graphics.setColor(shellColor);
+                    graphics.setStroke(new BasicStroke(1));
+                    graphics.draw(objectClickbox);
+                }
+            }
+        }
         
         GameObject tunnel = plugin.getNearestTunnel();
         if (tunnel != null)

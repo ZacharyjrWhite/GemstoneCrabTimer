@@ -89,6 +89,17 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "highlightShell",
+		name = "Highlight Shell",
+		description = "Highlight the shell after boss death",
+		section = highlights
+	)
+	default boolean highlightShell()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "tunnelTimeLeft",
 		name = "Display Time Left",
 		description = "Display time left until fight end over the tunnel",

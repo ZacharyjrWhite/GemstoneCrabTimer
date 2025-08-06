@@ -19,8 +19,6 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.MenuAction;
-import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
@@ -48,6 +46,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 {
 	// Gemstone Crab boss NPC ID
 	private static final int GEMSTONE_CRAB_ID = 14779;
+
+	// Gemstone Crab shell NPC ID
+	private static final int GEMSTONE_CRAB_SHELL_ID = 14780;
 	
 	// Tunnel game object ID
 	private static final int TUNNEL_OBJECT_ID = 57631;
@@ -75,6 +76,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private static final String GEMSTONE_CRAB_MINE_SUCCESS_MESSAGE = "You swing your pick at the crab shell.";
 	private static final String GEMSTONE_CRAB_MINE_FAIL_MESSAGE = "Your understanding of the gemstone crab is not great enough to mine its shell.";
 	private static final String GEMSTONE_CRAB_GEM_MINE_MESSAGE = "You mine an uncut ";
+	private static final String GEMSTONE_CRAB_TOP16_MESSAGE = "You gained enough understanding of the crab to mine from its remains.";
+
 
 	// Configuration keys
 	private static final String CONFIG_GROUP = "gemstonecrab";
@@ -121,6 +124,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	// Track if the boss is present
 	private boolean bossPresent = false;
 
+	private double hpPercent;
+
 	// Track if we should highlight the tunnel
 	private boolean shouldHighlightTunnel = false;
 	
@@ -129,6 +134,18 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	// Track all tunnels in the scene
 	private final Map<WorldPoint, GameObject> tunnels = new HashMap<>();
+	
+	// Track the crab shell NPC to highlight
+	private NPC crabShell = null;
+	
+	// Track if we should highlight the crab shell
+	private boolean shouldHighlightShell = false;
+	
+	// Track if player is a top 16 damager (for shell color)
+	private boolean isTop16Damager = false;
+	
+	// Track all crab shells in the scene
+	private final Map<WorldPoint, NPC> shells = new HashMap<>();
 		
 	// Smooth time left tracking
 	private int lastHpPercent = 100;
@@ -184,8 +201,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		log.info("Gemstone Crab Plugin started!");
 		notificationSent = false;
 		shouldHighlightTunnel = false;
+		shouldHighlightShell = false;
 		nearestTunnel = null;
+		crabShell = null;
 		tunnels.clear();
+		shells.clear();
 		resetDpsTracking();
 		configStore.load(config);
 		overlayManager.add(overlay);
@@ -203,8 +223,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		notificationSent = false;
 		bossPresent = false;
 		shouldHighlightTunnel = false;
+		shouldHighlightShell = false;
 		nearestTunnel = null;
+		crabShell = null;
 		tunnels.clear();
+		shells.clear();
 		resetDpsTracking();
 		overlayManager.remove(overlay);
 		overlayManager.remove(dpsOverlay);
@@ -214,6 +237,21 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	public GameObject getNearestTunnel()
 	{
 		return nearestTunnel;
+	}
+	
+	public NPC getCrabShell()
+	{
+		return crabShell;
+	}
+	
+	public boolean shouldHighlightShell()
+	{
+		return shouldHighlightShell;
+	}
+	
+	public boolean isTop16Damager()
+	{
+		return isTop16Damager;
 	}
 	
 	public boolean shouldHighlightTunnel()
@@ -479,15 +517,25 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss spawned");
 			bossPresent = true;
 			notificationSent = false;
-	
+
+				
 			resetTunnel();
 			// Start a new DPS tracking session
 			// This is where we reset stats - when a new boss spawns
 			resetDpsTracking();
+			isTop16Damager = false;
 			fightInProgress = true;
 			fightStartTime = System.currentTimeMillis();
 			setLastMiningAttempt();
 			log.debug("New boss spawned, resetting DPS stats");
+		}
+		// Track crab shells in the scene
+		else if (npc.getId() == GEMSTONE_CRAB_SHELL_ID)
+		{
+			WorldPoint location = npc.getWorldLocation();
+			shells.put(location, npc);
+			log.debug("Crab shell NPC spawned at {}", location);
+
 		}
 	}
 	
@@ -501,31 +549,33 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss despawned");
 			bossPresent = false;
 			
-			// Finalize DPS tracking but don't reset stats
-			if (fightInProgress)
-			{
-				fightDuration = System.currentTimeMillis() - fightStartTime;
-				fightInProgress = false;
-				
-				// Calculate final DPS
-				if (fightDuration > 0)
-				{
-					currentDps = (double) totalDamage / (fightDuration / 1000.0);
-				}
-
-				updateKillStats();
-
-				log.debug("Fight ended. Total damage: {}, Duration: {}s, DPS: {}, XP gained: {}", 
-					totalDamage, fightDuration / 1000.0, currentDps, totalXpGained);
-			}
-			
-			// When the boss dies, find and highlight the nearest tunnel
+			// When the boss dies, highlight the nearest tunnel
 			if (config.highlightTunnel())
 			{
 				findNearestTunnel();
 				shouldHighlightTunnel = true;
 				log.debug("Boss died, highlighting nearest tunnel");
 			}
+			
+			// Also find and highlight the shell in red by default
+			updateCrabShell();
+			// Set to true but not top 16 yet (will be red)
+			shouldHighlightShell = true;
+			
+			log.debug("Boss died, highlighting shell in red");
+			
+			// Update kill stats if this was a valid kill
+			updateKillStats();
+		}
+		else if (npc.getId() == GEMSTONE_CRAB_SHELL_ID)
+		{
+			// If the despawned NPC is our tracked shell, clear it
+			if (crabShell != null && npc.equals(crabShell))
+			{
+				crabShell = null;
+			}
+			// Also remove from our shell map
+			shells.remove(npc.getWorldLocation());
 		}
 	}
 	
@@ -538,6 +588,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		// Always find the nearest tunnel when in the area, even during the fight
 		if (playerInArea) {
 			findNearestTunnel();
+			// Update the crab shell reference
+			updateCrabShell();
 		}
 		
 		// If player left the area, reset tracking
@@ -626,7 +678,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			shouldHighlightTunnel = false;
 			nearestTunnel = null;
 			tunnels.clear();
-			
+			shells.clear();
+			crabShell = null;
 			// Reset DPS tracking when changing areas
 			if (fightInProgress)
 			{
@@ -644,8 +697,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	 */
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
+        // Check for all relevant message types, including colored messages
         if (chatMessage.getType() == ChatMessageType.GAMEMESSAGE || 
 			chatMessage.getType() == ChatMessageType.SPAM) {  	
+			// Log all message types for debugging
+			log.debug("Chat message received: type={}, message={}", chatMessage.getType(), chatMessage.getMessage());
 			String message = chatMessage.getMessage();
 			
 			if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_SUCCESS_MESSAGE)) {
@@ -661,7 +717,15 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					miningAttempts++;
 					miningFailedCount++;
 					setLastMiningAttempt();
-				}		
+				}
+			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_DEATH_MESSAGE)) {			
+				updateKillStats();	
+			} else if (message.contains(GEMSTONE_CRAB_TOP16_MESSAGE)) {
+				log.debug("You are a top 16 damager on the Gemstone Crab!");
+				shouldHighlightShell = true;
+				isTop16Damager = true;
+				updateCrabShell();
+				log.debug("Shell highlighting enabled (green) - isTop16Damager: {}, shell: {}", isTop16Damager, crabShell != null ? crabShell.getId() : "null");
 			} else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
 				log.debug("Gem mined");
 				gemsMined++;
@@ -770,7 +834,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 			
 			// Calculate current HP percentage (0-100)
-			double hpPercent = (((double) healthRatio / (double) healthScale) * 100);
+			hpPercent = (((double) healthRatio / (double) healthScale) * 100);
 			
 			// Check if HP is at or below the threshold
 			if (hpPercent <= (config.hpThreshold()) && !notificationSent)
@@ -848,6 +912,21 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		
 		nearestTunnel = closest;
 		log.debug("Found nearest tunnel at distance: {}", closestDistance);
+	}
+	
+	// Update the crab shell reference from the shells map
+	private void updateCrabShell()
+	{
+		if (shells.isEmpty())
+		{
+			crabShell = null;
+			return;
+		}
+		
+		// Since there will only ever be one shell NPC around the player,
+		// we can just use the first one in the map
+		crabShell = shells.values().iterator().next();
+		log.debug("Updated crab shell NPC reference: {}", crabShell != null ? crabShell.getWorldLocation() : "null");
 	}
 
 	/*
