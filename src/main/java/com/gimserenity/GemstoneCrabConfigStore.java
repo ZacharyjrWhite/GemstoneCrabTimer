@@ -21,6 +21,7 @@ public class GemstoneCrabConfigStore {
         configStore.put(Constants.DISPLAY_MINED_COUNT, config.displayMinedCount());
         configStore.put(Constants.DISPLAY_FAILED_MINING_COUNT, config.displayFailedMiningCount());
         configStore.put(Constants.DISPLAY_GEM_COUNT, config.displayGemCount());
+        configStore.put(Constants.DISPLAY_TOP3_COUNT, config.displayTop3Count());
         configStore.put(Constants.DISPLAY_OPALS, config.displayOpals());
         configStore.put(Constants.DISPLAY_JADES, config.displayJades());
         configStore.put(Constants.DISPLAY_RED_TOPAZ, config.displayRedTopaz());

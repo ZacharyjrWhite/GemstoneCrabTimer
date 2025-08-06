@@ -80,6 +80,14 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                 .color(Color.GREEN)
                 .build());
                 
+            // Add players interacting with crab
+            if (configStore.getValue(Constants.DISPLAY_PLAYER_COUNT)) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Players Fighting:")
+                    .right(String.valueOf(plugin.getPlayersInteractingWithCrab()))
+                    .build());
+            }
+            
             // Add total damage if enabled
             if (configStore.getValue(Constants.DISPLAY_TOTAL_DAMAGE)) {
                 panelComponent.getChildren().add(LineComponent.builder()
@@ -110,14 +118,6 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Duration:")
                     .right(String.format("%d:%02d", seconds / 60, seconds % 60))
-                    .build());
-            }
-            
-            // Add players interacting with crab
-            if (configStore.getValue(Constants.DISPLAY_PLAYER_COUNT)) {
-                panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Players Fighting:")
-                    .right(String.valueOf(plugin.getPlayersInteractingWithCrab()))
                     .build());
             }
             
@@ -173,6 +173,13 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                 panelComponent.getChildren().add(LineComponent.builder()
                     .left("Gems Mined:")
                     .right(String.valueOf(plugin.getGemsCount()))
+                    .build());
+            }
+            
+            if (configStore.getValue(Constants.DISPLAY_TOP3_COUNT)) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Top 3:")
+                    .right(String.valueOf(plugin.getTop3Count()))
                     .build());
             }
         }

@@ -293,6 +293,18 @@ public interface GemstoneCrabTimerConfig extends Config
         return false;
     }
 	
+	@ConfigItem(
+        keyName = Constants.DISPLAY_TOP3_COUNT,
+        name = "Display top 3 count",
+        description = "Display number of times you've been in the top 3 crab crushers",
+		section = statTracking,
+		position = 7
+    )
+    default boolean displayTop3Count()
+    {
+        return false;
+    }
+	
 	@ConfigSection(
 		name = "Gem Tracking",
 		description = "Gem Tracking",

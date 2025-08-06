@@ -77,6 +77,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private static final String GEMSTONE_CRAB_MINE_FAIL_MESSAGE = "Your understanding of the gemstone crab is not great enough to mine its shell.";
 	private static final String GEMSTONE_CRAB_GEM_MINE_MESSAGE = "You mine an uncut ";
 	private static final String GEMSTONE_CRAB_TOP16_MESSAGE = "You gained enough understanding of the crab to mine from its remains.";
+	private static final String GEMSTONE_CRAB_TOP3_MESSAGE = "The top three crab crushers were ";
 
 
 	// Configuration keys
@@ -189,6 +190,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	// Track players interacting with the crab
 	private int playersInteractingWithCrab = 0;
+	
+	// Track times player has been in top 3
+	private int top3Count = 0;
 
 	// Overlay for highlighting tunnels
 	@Inject
@@ -261,6 +265,13 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	public int getPlayersInteractingWithCrab() {
 		return playersInteractingWithCrab;
+	}
+	
+	/*
+	 * Get the number of times the player has been in the top 3 crab crushers
+	 */
+	public int getTop3Count() {
+		return top3Count;
 	}
 	
 	public boolean shouldHighlightTunnel()
@@ -468,6 +479,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		rubies = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_RUBIES);
 		diamonds = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_DIAMONDS);
 		dragonstones = util.loadConfigValue(CONFIG_GROUP, CONFIG_KEY_DRAGONSTONES);
+		
+		// Load top 3 count
+		top3Count = util.loadConfigValue(CONFIG_GROUP, Constants.CONFIG_KEY_TOP3_COUNT);
 	}
 
 	
@@ -600,6 +614,15 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			findNearestTunnel();
 			// Update the crab shell reference
 			updateCrabShell();
+		}
+
+		if(!playerInArea)
+		{
+			shouldHighlightShell = false;
+		}
+		else
+		{
+			shouldHighlightShell = true;
 		}
 		
 		// If player left the area, reset tracking
@@ -756,7 +779,20 @@ public class GemstoneCrabTimerPlugin extends Plugin
 				isTop16Damager = true;
 				updateCrabShell();
 				log.debug("Shell highlighting enabled (green) - isTop16Damager: {}, shell: {}", isTop16Damager, crabShell != null ? crabShell.getId() : "null");
-			} else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
+			} else if (message.startsWith(GEMSTONE_CRAB_TOP3_MESSAGE)) {
+				log.debug("Top 3 crab crushers message detected: {}", message);
+				String playerName = client.getLocalPlayer().getName();
+				String namesSection = message.substring(GEMSTONE_CRAB_TOP3_MESSAGE.length());
+				
+				if (namesSection.contains(playerName + ",") || 
+				    namesSection.contains(playerName + " &") || 
+				    namesSection.contains(playerName + "!")) {
+					log.debug("Player {} is confirmed in the top 3 crab crushers!", playerName);
+					top3Count++;
+					saveCrabCounts();
+				}
+			}
+			else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
 				log.debug("Gem mined");
 				gemsMined++;
 				mineCountShell++;
@@ -980,6 +1016,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_RUBIES, rubies);
 		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_DIAMONDS, diamonds);
 		configManager.setRSProfileConfiguration(CONFIG_GROUP, CONFIG_KEY_DRAGONSTONES, dragonstones);
+		
+		// Save top 3 count
+		configManager.setRSProfileConfiguration(CONFIG_GROUP, Constants.CONFIG_KEY_TOP3_COUNT, top3Count);
 	}
 	
 	/*
