@@ -104,6 +104,11 @@ For issues, suggestions, or contributions, please open an issue on the GitHub re
 
 ## Changelog
 
+### V1.1.3
+- Fix: Also reset tunnel highlight when boss respawns (same area)
+- Fix: Changed time left & notification to use getHealthRatio and getHealthScale instead of reading widget, this allows all HP bar configurations to work
+- Removed unused variables, imports and now redundant methods
+
 ### V1.1.2
 - Messages now show [Gemstone Crab] in front of them
 - Fix issues with threshold notification settings

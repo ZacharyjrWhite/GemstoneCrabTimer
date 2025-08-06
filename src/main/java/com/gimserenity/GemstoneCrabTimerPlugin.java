@@ -12,6 +12,7 @@ import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.NPC;
 import net.runelite.api.Skill;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameObjectDespawned;
@@ -119,10 +120,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	// Track if the boss is present
 	private boolean bossPresent = false;
-
-	private boolean fightEnded = false;
-
-	private boolean AFK = true;
 
 	// Track if we should highlight the tunnel
 	private boolean shouldHighlightTunnel = false;
@@ -260,17 +257,39 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			return 0;
 		}
 		
-		Widget bossHpBar = client.getWidget(BOSS_HP_BAR_WIDGET_ID);
-		if (bossHpBar == null || bossHpBar.isHidden() || bossHpBar.getText() == null)
+		// Get the boss NPC
+		NPC boss = null;
+		WorldView view = client.getWorldView(-1);
+		for (NPC npc : view.npcs())
+		{
+			if (npc != null && npc.getId() == GEMSTONE_CRAB_ID)
+			{
+				boss = npc;
+				break;
+			}
+		}
+		
+		if (boss == null)
 		{
 			return 0;
 		}
 		
 		try
 		{
-			// Get current HP percentage from widget
-			int currentHpPercent = Integer.parseInt(bossHpBar.getText().replace("%", "").trim());
-			currentHpPercent = Math.max(1, Math.min(currentHpPercent, 100));
+			// Get health ratio and scale from the NPC
+			int healthRatio = boss.getHealthRatio();
+			int healthScale = boss.getHealthScale();
+			
+			// If either value is -1, the health info is not available
+			if (healthRatio == -1 || healthScale == -1)
+			{
+				log.debug("Health ratio or scale not available: {} / {}", healthRatio, healthScale);
+				return 0;
+			}
+			
+			// Calculate current HP percentage
+			int currentHpPercent = (int) (((double) healthRatio / (double) healthScale) * 100);
+			currentHpPercent = Math.max(0, Math.min(currentHpPercent, 100));
 			
 			// Update our tracking variables when HP changes
 			if (currentHpPercent != lastHpPercent)
@@ -288,9 +307,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			double timeLeftSeconds = (interpolatedHpPercent / 100.0) * 600;
 			return (long) (timeLeftSeconds * 1000);
 		}
-		catch (NumberFormatException e)
+		catch (Exception e)
 		{
-			log.debug("Failed to parse HP percentage for countdown");
+			log.debug("Failed to calculate time remaining: {}", e.getMessage());
 			return 0;
 		}
 	}
@@ -372,6 +391,14 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		pendingCombatXp = 0;
 		lastXp.clear();
 	}
+
+	private void resetTunnel()
+	{
+		if(!tunnels.isEmpty())
+		{
+			shouldHighlightTunnel = false;
+		}
+	}
 	
 	/*
 	 * Load any saved configuration values
@@ -452,9 +479,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss spawned");
 			bossPresent = true;
 			notificationSent = false;
-			fightEnded = false;
-			AFK = true;
-
+	
+			resetTunnel();
 			// Start a new DPS tracking session
 			// This is where we reset stats - when a new boss spawns
 			resetDpsTracking();
@@ -474,7 +500,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		{
 			log.debug("Gemstone Crab boss despawned");
 			bossPresent = false;
-			fightEnded = true;
 			
 			// Finalize DPS tracking but don't reset stats
 			if (fightInProgress)
@@ -628,7 +653,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					log.debug("Gemstone Crab successfully mined!");
 					miningAttempts++;
 					minedCount++;
-					AFK = false;
 					setLastMiningAttempt();
 				}
 			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_MINE_FAIL_MESSAGE)) {
@@ -636,7 +660,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					log.debug("Failed to mine Gemstone Crab!");
 					miningAttempts++;
 					miningFailedCount++;
-					AFK = false;
 					setLastMiningAttempt();
 				}		
 			} else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
@@ -717,40 +740,49 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	
 	private void checkBossHpAndNotify()
 	{
-		// Get the boss HP widget
-		Widget bossHpBar = client.getWidget(BOSS_HP_BAR_WIDGET_ID);
+		// Get the boss NPC
+		NPC boss = null;
+		WorldView view = client.getWorldView(-1);
+		for (NPC npc : view.npcs())
+		{
+			if (npc != null && npc.getId() == GEMSTONE_CRAB_ID)
+			{
+				boss = npc;
+				break;
+			}
+		}
 		
-		if (bossHpBar == null || bossHpBar.isHidden())
+		if (boss == null)
 		{
 			return;
 		}
 		
-		// Get HP percentage directly from the widget's text value
-		String text = bossHpBar.getText();
-		if (text == null || text.isEmpty())
-		{
-			return;
-		}
-		
-		// Parse the percentage value (e.g., "50%" -> 50)
-		int hpPercent;
 		try
 		{
-			// Remove the % sign and parse the number
-			hpPercent = Integer.parseInt(text.replace("%", "").trim());
+			// Get health ratio and scale from the NPC
+			int healthRatio = boss.getHealthRatio();
+			int healthScale = boss.getHealthScale();
+			
+			// If either value is -1, the health info is not available
+			if (healthRatio == -1 || healthScale == -1)
+			{
+				return;
+			}
+			
+			// Calculate current HP percentage (0-100)
+			double hpPercent = (((double) healthRatio / (double) healthScale) * 100);
+			
+			// Check if HP is at or below the threshold
+			if (hpPercent <= (config.hpThreshold()) && !notificationSent)
+			{
+				notificationSent = true;
+				notifier.notify(config.hpThresholdNotification(), config.notificationMessage() + " (" + config.hpThreshold() + "% HP)");
+				log.debug("Sent notification for Gemstone Crab at {}% HP", hpPercent);
+			}
 		}
-		catch (NumberFormatException e)
+		catch (Exception e)
 		{
-			log.debug("Failed to parse HP percentage from text: {}", text);
-			return;
-		}
-		
-		// Check if HP is at or below the threshold
-		if (hpPercent <= config.hpThreshold() && !notificationSent)
-		{
-			notificationSent = true;
-			notifier.notify(config.hpThresholdNotification(), config.notificationMessage() + " (" + hpPercent + "% HP)");
-			log.debug("Sent notification for Gemstone Crab at {}% HP", hpPercent);
+			log.debug("Failed to calculate HP percentage for notification: {}", e.getMessage());
 		}
 	}
 
@@ -776,27 +808,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		if (nearestTunnel != null && gameObject.getId() == TUNNEL_OBJECT_ID && gameObject.equals(nearestTunnel))
 		{
 			nearestTunnel = null;
-		}
-	}
-	
-	@Subscribe
-	public void onMenuOptionClicked(MenuOptionClicked event)
-	{
-		// Check if the player clicked on a tunnel
-		if (event.getMenuAction() == MenuAction.GAME_OBJECT_FIRST_OPTION || 
-			event.getMenuAction() == MenuAction.GAME_OBJECT_SECOND_OPTION || 
-			event.getMenuAction() == MenuAction.GAME_OBJECT_THIRD_OPTION || 
-			event.getMenuAction() == MenuAction.GAME_OBJECT_FOURTH_OPTION || 
-			event.getMenuAction() == MenuAction.GAME_OBJECT_FIFTH_OPTION)
-		{
-			int objectId = event.getId();
-			
-			// If the player clicked on a tunnel, mark it as interacted
-			if (objectId == TUNNEL_OBJECT_ID)
-			{
-				log.debug("Player interacted with tunnel");
-				AFK = false;
-			}
 		}
 	}
 
