@@ -168,6 +168,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	// Kill tracking variables
 	private int crabCount;
 	private long lastMiningAttempt;
+	private long lastKillTime;
 
 	// Mining stats tracking variables
 	private int minedCount;
@@ -564,8 +565,6 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			
 			log.debug("Boss died, highlighting shell in red");
 			
-			// Update kill stats if this was a valid kill
-			updateKillStats();
 		}
 		else if (npc.getId() == GEMSTONE_CRAB_SHELL_ID)
 		{
@@ -718,8 +717,14 @@ public class GemstoneCrabTimerPlugin extends Plugin
 					miningFailedCount++;
 					setLastMiningAttempt();
 				}
-			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_DEATH_MESSAGE)) {			
-				updateKillStats();	
+			} else if (message.equalsIgnoreCase(GEMSTONE_CRAB_DEATH_MESSAGE)) {
+				if (!isKillBeforeCooldown()) {
+					log.debug("Gemstone Crab death detected, updating kill stats");
+					updateKillStats();
+					setLastKillTime();
+				} else {
+					log.debug("Gemstone Crab death detected, but within cooldown period - ignoring");
+				}	
 			} else if (message.contains(GEMSTONE_CRAB_TOP16_MESSAGE)) {
 				log.debug("You are a top 16 damager on the Gemstone Crab!");
 				shouldHighlightShell = true;
@@ -995,6 +1000,20 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	 */
 	private boolean isMiningBeforeCooldown() {
 		return isValidKill() && (System.currentTimeMillis() < lastMiningAttempt + KILL_THRESHOLD_MILLISECONDS);
+	}
+
+	/*
+	 * Used to stop kill stats from updating multiple times
+	 */
+	private boolean isKillBeforeCooldown() {
+		return (System.currentTimeMillis() < lastKillTime + KILL_THRESHOLD_MILLISECONDS);
+	}
+
+	/*
+	 * Set the last kill time
+	 */
+	private void setLastKillTime() {
+		lastKillTime = System.currentTimeMillis();
 	}
 
 	/*
