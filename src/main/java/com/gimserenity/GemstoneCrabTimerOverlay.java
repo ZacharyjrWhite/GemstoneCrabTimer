@@ -49,14 +49,16 @@ public class GemstoneCrabTimerOverlay extends Overlay
                 // Use green color if top 16 damager, red otherwise
                 Color shellColor = plugin.isTop16Damager() ? Color.GREEN : Color.RED;
                 
-                String shellText = plugin.isTop16Damager() ? "Can Mine" : "Can't Mine";
+                String shellText = plugin.isTop16Damager() ? "CAN MINE" : "CAN'T MINE";
+
+                Color textColor = plugin.isTop16Damager() ? Color.BLUE : Color.WHITE;
                 
-                if (shell.getCanvasTextLocation(graphics, shellText, 0) != null)
+                if (shell.getCanvasTextLocation(graphics, shellText, 20) != null)
                 {
                     Point textLocation = shell.getCanvasTextLocation(graphics, shellText, 0);
                     if (textLocation != null)
                     {
-                        OverlayUtil.renderTextLocation(graphics, textLocation, shellText, shellColor);
+                        OverlayUtil.renderTextLocation(graphics, textLocation, shellText, textColor);
                     }
                 }
                 

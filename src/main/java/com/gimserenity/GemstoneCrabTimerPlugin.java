@@ -185,6 +185,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private int rubies = 0;
 	private int diamonds = 0;
 	private int dragonstones = 0;
+	private int mineCountShell = 0;
 
 	// Overlay for highlighting tunnels
 	@Inject
@@ -423,12 +424,14 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	{
 		totalDamage = 0;
 		fightStartTime = 0;
-		fightDuration = 0;
+		fightDuration = 0; // Reset fight duration
 		currentDps = 0;
 		fightInProgress = false;
 		totalXpGained = 0; // Reset total XP gained
 		pendingCombatXp = 0;
 		lastXp.clear();
+		
+		log.debug("DPS tracking reset, fight duration: {}", fightDuration);
 	}
 
 	private void resetTunnel()
@@ -575,6 +578,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			}
 			// Also remove from our shell map
 			shells.remove(npc.getWorldLocation());
+			mineCountShell = 0;
 		}
 	}
 	
@@ -612,6 +616,12 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			return;
 		}
 		
+		// If we mined 3 gems, reset top 16 to stop shell highlight
+		if (mineCountShell >= 3)
+		{	
+			isTop16Damager = false;
+		}
+
 		// Check for boss HP bar to detect boss presence when re-entering the area
 		if (playerInArea && !bossPresent)
 		{
@@ -653,6 +663,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			if (duration > 0)
 			{
 				currentDps = totalDamage / (duration / 1000.0);
+				// Update fight duration for valid kill tracking
+				fightDuration = duration;
 			}
 
 			log.debug("XP-based damage this tick: {} (total damage: {}, DPS: {})",
@@ -679,6 +691,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			tunnels.clear();
 			shells.clear();
 			crabShell = null;
+			mineCountShell = 0;
 			// Reset DPS tracking when changing areas
 			if (fightInProgress)
 			{
@@ -734,7 +747,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			} else if (message.contains(GEMSTONE_CRAB_GEM_MINE_MESSAGE)) {
 				log.debug("Gem mined");
 				gemsMined++;
-				
+				mineCountShell++;
 				// Track specific gem types
 				if (message.contains("opal")) {
 					opals++;
