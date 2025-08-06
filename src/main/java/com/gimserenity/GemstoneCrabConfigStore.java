@@ -12,6 +12,7 @@ public class GemstoneCrabConfigStore {
         configStore.put(Constants.DISPLAY_DPS, config.displayDps());
         configStore.put(Constants.DISPLAY_XP_GAINED, config.displayXpGained());
         configStore.put(Constants.DISPLAY_DURATION, config.displayDuration());
+        configStore.put(Constants.DISPLAY_PLAYER_COUNT, config.displayPlayerCount());
         configStore.put(Constants.DISPLAY_TIME_LEFT, config.displayTimeLeft());
         configStore.put(Constants.SHOW_STAT_TRACKING, config.showOverlay());
         configStore.put(Constants.SHOW_GEM_TRACKING, config.showGemTracking());

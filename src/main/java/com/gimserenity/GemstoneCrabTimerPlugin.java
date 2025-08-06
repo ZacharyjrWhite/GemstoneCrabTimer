@@ -186,6 +186,9 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	private int diamonds = 0;
 	private int dragonstones = 0;
 	private int mineCountShell = 0;
+	
+	// Track players interacting with the crab
+	private int playersInteractingWithCrab = 0;
 
 	// Overlay for highlighting tunnels
 	@Inject
@@ -254,6 +257,10 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	public boolean isTop16Damager()
 	{
 		return isTop16Damager;
+	}
+	
+	public int getPlayersInteractingWithCrab() {
+		return playersInteractingWithCrab;
 	}
 	
 	public boolean shouldHighlightTunnel()
@@ -622,6 +629,11 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			isTop16Damager = false;
 		}
 
+		// Count players interacting with the crab
+		if (playerInArea && bossPresent) {
+			countPlayersInteractingWithCrab();
+		}
+		
 		// Check for boss HP bar to detect boss presence when re-entering the area
 		if (playerInArea && !bossPresent)
 		{
@@ -1027,6 +1039,29 @@ public class GemstoneCrabTimerPlugin extends Plugin
 	 */
 	private void setLastKillTime() {
 		lastKillTime = System.currentTimeMillis();
+	}
+
+	/*
+	 * Count players in the area who are interacting with the crab
+	 */
+	private void countPlayersInteractingWithCrab() {
+		// Reset counter
+		playersInteractingWithCrab = 0;
+		
+		// Get all players in the area
+		for (net.runelite.api.Player player : client.getWorldView(-1).players()) {
+			// Check if the player is interacting with the crab
+			net.runelite.api.Actor interacting = player.getInteracting();
+			if (interacting instanceof net.runelite.api.NPC) {
+				net.runelite.api.NPC npc = (net.runelite.api.NPC) interacting;
+				if (npc.getId() == GEMSTONE_CRAB_ID) {
+					playersInteractingWithCrab++;
+				}
+			}
+		}
+		
+		// Debug log
+		log.debug("Players interacting with crab: {}", playersInteractingWithCrab);
 	}
 
 	/*

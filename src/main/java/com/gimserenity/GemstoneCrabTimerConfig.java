@@ -131,11 +131,23 @@ public interface GemstoneCrabTimerConfig extends Config
 	}
 	
 	@ConfigItem(
+		keyName = Constants.DISPLAY_PLAYER_COUNT,
+		name = "Display player count",
+		description = "Display player count in the current fight",
+		section = currentFightTracking,
+		position = 1
+	)
+	default boolean displayPlayerCount()
+	{
+		return false;
+	}
+	
+	@ConfigItem(
 		keyName = Constants.DISPLAY_TOTAL_DAMAGE,
 		name = "Display total damage",
 		description = "Display total damage dealt in the current fight",
 		section = currentFightTracking,
-		position = 1
+		position = 2
 	)
 	default boolean displayTotalDamage()
 	{
@@ -147,7 +159,7 @@ public interface GemstoneCrabTimerConfig extends Config
 		name = "Display DPS",
 		description = "Display damage per second in the current fight",
 		section = currentFightTracking,
-		position = 2
+		position = 3
 	)
 	default boolean displayDps()
 	{
@@ -159,7 +171,7 @@ public interface GemstoneCrabTimerConfig extends Config
 		name = "Display XP gained",
 		description = "Display XP gained in the current fight",
 		section = currentFightTracking,
-		position = 3
+		position = 4
 	)
 	default boolean displayXpGained()
 	{
@@ -171,7 +183,7 @@ public interface GemstoneCrabTimerConfig extends Config
 		name = "Display duration",
 		description = "Display duration of the current fight",
 		section = currentFightTracking,
-		position = 4
+		position = 5
 	)
 	default boolean displayDuration()
 	{
@@ -183,7 +195,7 @@ public interface GemstoneCrabTimerConfig extends Config
 		name = "Display time left",
 		description = "Display estimated time left in the current fight",
 		section = currentFightTracking,
-		position = 5
+		position = 6
 	)
 	default boolean displayTimeLeft()
 	{

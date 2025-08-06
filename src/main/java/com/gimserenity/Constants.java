@@ -9,6 +9,7 @@ public class Constants {
     public final static String DISPLAY_DPS = "displayDps";
     public final static String DISPLAY_XP_GAINED = "displayXpGained";
     public final static String DISPLAY_DURATION = "displayDuration";
+    public final static String DISPLAY_PLAYER_COUNT = "displayPlayerCount";
     public final static String DISPLAY_TIME_LEFT = "displayTimeLeft";
     public final static String DISPLAY_KILL_COUNT = "displayKillCount";
     public final static String DISPLAY_MINING_ATTEMPTS = "displayMiningAttempts";

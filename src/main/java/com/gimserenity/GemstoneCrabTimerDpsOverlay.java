@@ -113,6 +113,14 @@ public class GemstoneCrabTimerDpsOverlay extends Overlay
                     .build());
             }
             
+            // Add players interacting with crab
+            if (configStore.getValue(Constants.DISPLAY_PLAYER_COUNT)) {
+                panelComponent.getChildren().add(LineComponent.builder()
+                    .left("Players Fighting:")
+                    .right(String.valueOf(plugin.getPlayersInteractingWithCrab()))
+                    .build());
+            }
+            
             // Add estimated time left if enabled
             if (configStore.getValue(Constants.DISPLAY_TIME_LEFT) && plugin.isFightInProgress()) {
                 long timeLeftMillis = plugin.getEstimatedTimeRemainingMillis();
