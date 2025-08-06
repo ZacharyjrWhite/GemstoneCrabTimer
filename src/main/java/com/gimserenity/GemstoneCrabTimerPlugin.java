@@ -391,6 +391,14 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		pendingCombatXp = 0;
 		lastXp.clear();
 	}
+
+	private void resetTunnel()
+	{
+		if(!tunnels.isEmpty())
+		{
+			shouldHighlightTunnel = false;
+		}
+	}
 	
 	/*
 	 * Load any saved configuration values
@@ -471,7 +479,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			log.debug("Gemstone Crab boss spawned");
 			bossPresent = true;
 			notificationSent = false;
-
+	
+			resetTunnel();
 			// Start a new DPS tracking session
 			// This is where we reset stats - when a new boss spawns
 			resetDpsTracking();
