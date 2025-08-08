@@ -7,7 +7,6 @@ build
 nbactions.xml
 nb-configuration.xml
 nbproject/
-run-plugin.bat
 run-tests.bat
 test.html
 GemstoneCrabTimerPluginTest.java
