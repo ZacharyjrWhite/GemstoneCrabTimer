@@ -104,6 +104,9 @@ For issues, suggestions, or contributions, please open an issue on the GitHub re
 
 ## Changelog
 
+### V2.0.1
+- Fix: issue with non-breaking space in usernames for top 3
+
 ### V2.0.0
 - Top 3 placement Tracking
 - Players attacking the crab count
