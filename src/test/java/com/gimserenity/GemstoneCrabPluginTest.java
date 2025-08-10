@@ -37,19 +37,19 @@ public class GemstoneCrabPluginTest {
     @Test
     public void testPlayerInTop3PlayerNamesSuccess() {
         var mockPlayer = mock(Player.class);
-        when(mockPlayer.getName()).thenReturn("Pi no");
+        when(mockPlayer.getName()).thenReturn("Pi\u00A0no");
         when(mockClient.getLocalPlayer()).thenReturn(mockPlayer);
 
-        boolean result = plugin.isTop3Player("The top three crab crushers were Pi no, Mod Ash, & GIM Serenity!");
+        boolean result = plugin.isTop3Player("The top three crab crushers were Pi\u00A0no, Mod Ash, & GIM\u00A0Serenity!");
 
         assertTrue(result);
 
-        result = plugin.isTop3Player("The top three crab crushers were GIM Serenity, Pi no, & Mod Ash!");
+        result = plugin.isTop3Player("The top three crab crushers were GIM\u00A0Serenity, Pi\u00A0no, & Mod Ash!");
 
         assertTrue(result);
 
-        result = plugin.isTop3Player("The top three crab crushers were Mod Ash, GIM Serenity, & Pi no!");
-        
+        result = plugin.isTop3Player("The top three crab crushers were Mod\u00A0Ash, GIM Serenity, & Pi no!");
+
         assertTrue(result);
     }
 
