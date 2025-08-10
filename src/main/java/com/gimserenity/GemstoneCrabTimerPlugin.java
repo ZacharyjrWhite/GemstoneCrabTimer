@@ -31,6 +31,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.Text;
 
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -1124,8 +1125,8 @@ public class GemstoneCrabTimerPlugin extends Plugin
 
 	public boolean isTop3Player(String message) {
 		log.debug("Top 3 crab crushers message detected: {}", message);
-		String playerName = client.getLocalPlayer().getName();
-		String namesSection = message.substring(GEMSTONE_CRAB_TOP3_MESSAGE.length());
+		String playerName = Text.standardize(client.getLocalPlayer().getName());
+		String namesSection = Text.standardize(message.substring(GEMSTONE_CRAB_TOP3_MESSAGE.length()));
 		
 		boolean isTop3Player = Arrays.asList(namesSection.split("[,&!]"))
 			.stream()
