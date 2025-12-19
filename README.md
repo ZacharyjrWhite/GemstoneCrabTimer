@@ -117,6 +117,9 @@ For issues, suggestions, or contributions, please open an issue on the GitHub re
 
 ## Changelog
 
+### V2.1.1
+- Fix: Issue with reset command resetting other players stats
+
 ### V2.1.0
 - Total cumulative damage
 - Overlay appearance editor
