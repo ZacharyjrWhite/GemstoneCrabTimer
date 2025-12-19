@@ -847,8 +847,10 @@ public class GemstoneCrabTimerPlugin extends Plugin
 			
 			// Check for the reset stats command
 			if (message.equalsIgnoreCase("!Resetgemcrab")) {
-				log.debug("Reset stats command received");
-				resetStats();
+				if( Text.sanitize(chatMessage.getName()) == client.getLocalPlayer().getName() ){
+					log.debug("Reset stats command received");
+					resetStats();
+				}
 			}
 		}
 	}
@@ -1057,7 +1059,7 @@ public class GemstoneCrabTimerPlugin extends Plugin
 		
 		// Reset cumulative XP
 		cumulativeXp = 0;
-		
+
 		// Save the reset values to config
 		saveCrabCounts();
 		
